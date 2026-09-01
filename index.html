@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="description" content="Bob Burguer - Os melhores hambúrgueres de Breu Branco - PA. Peça delivery ou retire no local.">
+  <meta name="theme-color" content="#FFD100">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Bob Burguer | Hambúrgueres em Breu Branco - PA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+:root {
+  --black: #0D0D0D; --black-2: #1A1A1A; --black-3: #2A2A2A;
+  --yellow: #FFD100; --yellow-dark: #E6BC00; --red: #E30613; --red-dark: #B80510;
+  --white: #FFFFFF; --gray: #9CA3AF; --gray-light: #F3F4F6; --success: #22C55E;
+  --radius: 16px; --radius-sm: 10px; --shadow: 0 8px 30px rgba(0,0,0,.35);
+  --transition: .25s cubic-bezier(.4,0,.2,1); --font: 'Poppins', system-ui, -apple-system, sans-serif;
+  --header-h: 64px;
+}
+[data-theme="light"] {
+  --black: #FFFFFF; --black-2: #F8F8F8; --black-3: #EEEEEE; --white: #0D0D0D;
+  --gray: #6B7280; --gray-light: #1A1A1A; --shadow: 0 8px 30px rgba(0,0,0,.12);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--font); background: var(--black); color: var(--white);
+  line-height: 1.5; min-height: 100dvh; overflow-x: hidden; -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; display: block; }
+button, input, select, a { font-family: inherit; }
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; border: none; background: none; }
+ul { list-style: none; }
+.container { width: 100%; max-width: 1100px; margin: 0 auto; padding: 0 16px; }
+
+.loading-screen {
+  position: fixed; inset: 0; background: var(--black);
+  display: flex; align-items: center; justify-content: center; z-index: 9999;
+  transition: opacity .4s, visibility .4s;
+}
+.loading-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.burger-loader { font-size: 4rem; animation: bounce 1s ease infinite; }
+.loader p { margin-top: 12px; font-weight: 700; font-size: 1.25rem; color: var(--yellow); }
+@keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
+
+.header {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(13,13,13,.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255,209,0,.15); height: var(--header-h);
+}
+[data-theme="light"] .header { background: rgba(255,255,255,.92); border-bottom-color: rgba(0,0,0,.08); }
+.header-inner { display: flex; align-items: center; justify-content: space-between; height: 100%; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.25rem; }
+.logo-icon { font-size: 1.6rem; }
+.logo-text span { color: var(--yellow); }
+.nav { display: flex; align-items: center; gap: 6px; }
+.nav-btn {
+  padding: 8px 12px; border-radius: 999px; font-weight: 600; font-size: .85rem;
+  color: var(--white); transition: var(--transition);
+}
+.nav-btn:hover { background: var(--black-3); color: var(--yellow); }
+.cart-btn { position: relative; background: var(--yellow); color: #0D0D0D !important; font-weight: 700; }
+.cart-btn:hover { background: var(--yellow-dark); }
+.cart-count {
+  position: absolute; top: -6px; right: -6px; background: var(--red); color: #fff;
+  font-size: .65rem; width: 18px; height: 18px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-weight: 700;
+}
+.acesso-btn {
+  background: transparent !important; border: 1px solid rgba(255,209,0,.45) !important;
+  color: var(--yellow) !important; font-size: .8rem !important; padding: 6px 12px !important;
+}
+.acesso-btn:hover { background: rgba(255,209,0,.15) !important; }
+
+.hero {
+  position: relative; min-height: 380px; display: flex; align-items: center;
+  padding: 40px 0 56px; overflow: hidden;
+}
+.hero-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse at 70% 30%, rgba(255,209,0,.18) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(227,6,19,.12) 0%, transparent 45%),
+    linear-gradient(180deg, #0D0D0D 0%, #1a1200 100%);
+  z-index: 0;
+}
+.hero-content { position: relative; z-index: 1; text-align: center; }
+.hero-badge {
+  display: inline-block; background: rgba(255,209,0,.15); color: var(--yellow);
+  padding: 6px 14px; border-radius: 999px; font-size: .8rem; font-weight: 600;
+  margin-bottom: 16px; border: 1px solid rgba(255,209,0,.3);
+}
+.hero h1 { font-size: clamp(2.4rem, 8vw, 3.8rem); font-weight: 800; line-height: 1.1; margin-bottom: 12px; }
+.hero h1 span { color: var(--yellow); }
+.hero-sub { font-size: 1.05rem; color: var(--gray); max-width: 420px; margin: 0 auto 20px; }
+.hero-info { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-bottom: 24px; font-size: .9rem; color: var(--gray); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 24px; border-radius: 999px; font-weight: 700; font-size: 1rem;
+  transition: var(--transition); border: none; cursor: pointer; text-decoration: none;
+}
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-primary { background: var(--yellow); color: #0D0D0D; box-shadow: 0 4px 20px rgba(255,209,0,.35); }
+.btn-primary:hover:not(:disabled) { background: var(--yellow-dark); transform: translateY(-2px); }
+.btn-secondary { background: var(--black-3); color: var(--white); }
+.btn-secondary:hover { background: #3a3a3a; }
+.btn-success { background: var(--success); color: #fff; }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-block { width: 100%; }
+.btn-lg { padding: 16px 32px; font-size: 1.1rem; }
+.btn-ghost { background: transparent; color: var(--gray); margin-top: 12px; }
+.btn-ghost:hover { color: var(--white); }
+
+.menu-controls {
+  padding: 24px 16px 8px; position: sticky; top: var(--header-h); z-index: 50; background: var(--black);
+}
+.search-box { position: relative; margin-bottom: 14px; }
+.search-box input {
+  width: 100%; padding: 14px 16px 14px 44px; border-radius: 12px; border: 1px solid var(--black-3);
+  background: var(--black-2); color: var(--white); font-size: 1rem; outline: none;
+}
+.search-box input:focus { border-color: var(--yellow); box-shadow: 0 0 0 3px rgba(255,209,0,.2); }
+.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+.categories { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+.categories::-webkit-scrollbar { display: none; }
+.cat-btn {
+  flex-shrink: 0; padding: 8px 18px; border-radius: 999px; font-weight: 600; font-size: .85rem;
+  background: var(--black-2); color: var(--gray); border: 1px solid transparent; transition: var(--transition);
+}
+.cat-btn.active, .cat-btn:hover { background: var(--yellow); color: #0D0D0D; border-color: var(--yellow); }
+
+.section { padding: 32px 0 48px; }
+.section-title { font-size: 1.75rem; font-weight: 800; margin-bottom: 24px; text-align: center; }
+.products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+.product-card {
+  background: var(--black-2); border-radius: var(--radius); overflow: hidden;
+  border: 1px solid rgba(255,255,255,.06); transition: var(--transition); cursor: pointer;
+  display: flex; flex-direction: column;
+}
+.product-card:hover { transform: translateY(-4px); border-color: rgba(255,209,0,.35); box-shadow: var(--shadow); }
+.product-img {
+  height: 140px; background: linear-gradient(135deg, #2a2200, #1a1200);
+  display: flex; align-items: center; justify-content: center; font-size: 3.5rem; position: relative;
+}
+.product-img .badge-cat {
+  position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,.7); color: var(--yellow);
+  font-size: .7rem; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+}
+.product-body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+.product-name { font-weight: 700; font-size: 1.05rem; margin-bottom: 6px; }
+.product-desc {
+  font-size: .85rem; color: var(--gray); flex: 1; margin-bottom: 12px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.product-footer { display: flex; align-items: center; justify-content: space-between; }
+.product-price { font-weight: 800; font-size: 1.2rem; color: var(--yellow); }
+.btn-add {
+  background: var(--red); color: #fff; width: 40px; height: 40px; border-radius: 50%;
+  font-size: 1.4rem; font-weight: 700; display: flex; align-items: center; justify-content: center;
+}
+.btn-add:hover { background: var(--red-dark); transform: scale(1.1); }
+.no-results { text-align: center; color: var(--gray); padding: 40px; }
+
+.info-section { background: var(--black-2); }
+.info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+.info-card {
+  text-align: center; padding: 24px 16px; background: var(--black); border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,.05);
+}
+.info-icon { font-size: 2rem; display: block; margin-bottom: 10px; }
+.info-card h3 { font-size: 1.1rem; margin-bottom: 8px; color: var(--yellow); }
+.info-card p { font-size: .9rem; color: var(--gray); }
+
+.footer {
+  padding: 40px 16px; text-align: center; border-top: 1px solid rgba(255,255,255,.06);
+  color: var(--gray); font-size: .9rem;
+}
+.footer-logo { font-weight: 800; font-size: 1.3rem; color: var(--white); margin-bottom: 8px; }
+
+.float-btn {
+  position: fixed; z-index: 90; width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 20px rgba(0,0,0,.4);
+}
+.back-top {
+  bottom: 24px; right: 24px; background: var(--black-3); color: var(--white); font-size: 1.3rem;
+  opacity: 0; pointer-events: none; transition: var(--transition);
+}
+.back-top.visible { opacity: 1; pointer-events: auto; }
+
+/* Modals */
+.modal {
+  position: fixed; inset: 0; z-index: 200; display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; visibility: hidden; transition: opacity .3s, visibility .3s;
+}
+.modal.open { opacity: 1; visibility: visible; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); }
+.modal-content {
+  position: relative; background: var(--black-2); border-radius: 24px 24px 0 0;
+  padding: 28px 20px 36px; width: 100%; max-width: 480px; max-height: 92dvh; overflow-y: auto;
+  transform: translateY(100%); transition: transform .35s cubic-bezier(.4,0,.2,1);
+  border: 1px solid rgba(255,255,255,.08); border-bottom: none;
+}
+.modal.open .modal-content { transform: translateY(0); }
+.modal-lg { max-width: 520px; }
+.modal-close {
+  position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--black-3); color: var(--white); font-size: 1.4rem;
+  display: flex; align-items: center; justify-content: center; z-index: 2;
+}
+.modal h2 { font-size: 1.35rem; font-weight: 800; margin-bottom: 18px; text-align: center; }
+
+.form-group { margin-bottom: 14px; }
+.form-group label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: 6px; color: var(--gray); }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%; padding: 12px 14px; border-radius: var(--radius-sm); border: 1px solid var(--black-3);
+  background: var(--black); color: var(--white); font-size: 1rem; outline: none;
+}
+.form-group input:focus, .form-group select:focus { border-color: var(--yellow); box-shadow: 0 0 0 3px rgba(255,209,0,.15); }
+.form-row { display: flex; gap: 12px; }
+.form-row .form-group { flex: 1; }
+.form-row .flex-2 { flex: 2; }
+.cep-row { display: flex; gap: 8px; }
+.cep-row input { flex: 1; }
+.form-msg { font-size: .85rem; margin-top: 6px; min-height: 1.2em; }
+.form-msg.error { color: var(--red); font-weight: 600; }
+.form-msg.success { color: var(--success); }
+
+.choice-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.choice-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 24px 12px; border-radius: var(--radius); background: var(--black);
+  border: 2px solid transparent; transition: var(--transition); color: var(--white);
+}
+.choice-btn:hover { border-color: var(--yellow); background: rgba(255,209,0,.08); }
+.choice-icon { font-size: 2.2rem; }
+
+.product-preview { text-align: center; margin-bottom: 16px; }
+.product-preview .emoji { font-size: 3rem; }
+.product-preview .name { font-weight: 700; font-size: 1.15rem; margin-top: 6px; }
+.product-preview .price { color: var(--yellow); font-weight: 800; font-size: 1.25rem; }
+
+.add-list { margin: 12px 0 20px; }
+.add-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.add-item label { display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1; font-size: .95rem; }
+.add-item input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--yellow); }
+.add-price { color: var(--yellow); font-weight: 600; font-size: .9rem; white-space: nowrap; }
+
+.cart-item {
+  display: flex; align-items: flex-start; gap: 12px; padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+.cart-item-emoji { font-size: 1.8rem; }
+.cart-item-info { flex: 1; min-width: 0; }
+.cart-item-name { font-weight: 600; }
+.cart-item-adds { font-size: .8rem; color: var(--gray); margin-top: 2px; }
+.cart-item-qty { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+.qty-btn {
+  width: 28px; height: 28px; border-radius: 50%; background: var(--black-3); color: var(--white);
+  font-weight: 700; display: flex; align-items: center; justify-content: center;
+}
+.qty-btn:hover { background: var(--yellow); color: #0D0D0D; }
+.cart-totals {
+  background: var(--black); border-radius: var(--radius-sm); padding: 16px; margin: 16px 0 20px;
+}
+.total-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: .95rem; }
+.total-row.total {
+  font-size: 1.2rem; font-weight: 800; color: var(--yellow); margin-top: 8px;
+  padding-top: 8px; border-top: 1px solid rgba(255,255,255,.1);
+}
+
+.summary-box {
+  background: var(--black); border-radius: var(--radius-sm); padding: 16px; margin-bottom: 16px;
+  font-size: .92rem; line-height: 1.55;
+}
+.summary-box strong { color: var(--yellow); }
+
+/* Admin */
+.admin-panel {
+  position: fixed; inset: 0; z-index: 300; background: var(--black); overflow-y: auto; padding: 16px;
+}
+.admin-panel-inner { max-width: 960px; margin: 0 auto; padding-bottom: 40px; }
+.admin-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px; }
+.admin-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.admin-tab {
+  padding: 8px 14px; border-radius: 999px; background: var(--black-2); color: var(--gray);
+  font-weight: 600; font-size: .85rem; border: none; cursor: pointer;
+}
+.admin-tab.active { background: var(--yellow); color: #0D0D0D; }
+.admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.admin-stat {
+  background: var(--black-2); border-radius: var(--radius-sm); padding: 14px; text-align: center;
+  border: 1px solid rgba(255,255,255,.06);
+}
+.admin-stat .num { font-size: 1.5rem; font-weight: 800; color: var(--yellow); }
+.admin-stat .lbl { font-size: .75rem; color: var(--gray); margin-top: 2px; }
+.admin-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; align-items: center; }
+.admin-filters select, .admin-filters input {
+  padding: 10px 12px; border-radius: 8px; border: 1px solid var(--black-3);
+  background: var(--black-2); color: var(--white); font-size: .9rem; outline: none;
+}
+.admin-filters input { flex: 1; min-width: 140px; }
+.a-order {
+  background: var(--black-2); border-radius: var(--radius); padding: 14px; margin-bottom: 12px;
+  border: 1px solid rgba(255,255,255,.06); border-left: 4px solid #555;
+}
+.a-order.APPROVED { border-left-color: var(--success); }
+.a-order.PENDING { border-left-color: #F59E0B; }
+.a-order.REJECTED, .a-order.CANCELLED { border-left-color: var(--red); opacity: .85; }
+.a-order-top { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.a-order-id { font-weight: 800; color: var(--yellow); }
+.a-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+.a-badge-PENDING { background: rgba(245,158,11,.2); color: #FBBF24; }
+.a-badge-APPROVED { background: rgba(34,197,94,.2); color: #22c55e; }
+.a-badge-REJECTED, .a-badge-CANCELLED { background: rgba(227,6,19,.2); color: #f87171; }
+.a-badge-entrega { background: rgba(59,130,246,.2); color: #60a5fa; }
+.a-badge-retirada { background: rgba(168,85,247,.2); color: #c084fc; }
+.a-order-body { font-size: .88rem; color: var(--gray); line-height: 1.55; }
+.a-order-body strong { color: var(--white); }
+.a-order-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.a-order-actions select {
+  padding: 8px 10px; border-radius: 8px; border: 1px solid var(--black-3);
+  background: var(--black); color: var(--white); font-size: .8rem;
+}
+.admin-mode-banner {
+  background: rgba(255,209,0,.12); border: 1px solid rgba(255,209,0,.3); color: var(--yellow);
+  border-radius: var(--radius-sm); padding: 10px 14px; font-size: .82rem; margin-bottom: 14px;
+}
+
+@media (min-width: 600px) {
+  .modal { align-items: center; }
+  .modal-content {
+    border-radius: var(--radius); border-bottom: 1px solid rgba(255,255,255,.08); max-height: 90vh;
+  }
+  .modal.open .modal-content { transform: translateY(0) scale(1); }
+  .modal .modal-content { transform: translateY(20px) scale(.96); }
+}
+@media (max-width: 480px) {
+  .form-row { flex-direction: column; gap: 0; }
+  .choice-btns { grid-template-columns: 1fr; }
+  .hero { min-height: 320px; padding: 28px 0 40px; }
+  .nav-btn { padding: 8px 10px; font-size: .8rem; }
+}
+  </style>
+</head>
+<body>
+  <div id="loading-screen" class="loading-screen">
+    <div class="loader">
+      <div class="burger-loader">🍔</div>
+      <p>Bob Burguer</p>
+    </div>
+  </div>
+
+  <header class="header">
+    <div class="container header-inner">
+      <a href="#" class="logo" onclick="goHome(); return false;">
+        <span class="logo-icon">🍔</span>
+        <span class="logo-text">Bob <span>Burguer</span></span>
+      </a>
+      <nav class="nav">
+        <button class="nav-btn" onclick="scrollToMenu()">Cardápio</button>
+        <button class="nav-btn" id="theme-toggle" aria-label="Tema">🌙</button>
+        <button class="nav-btn cart-btn" onclick="openCart()" aria-label="Carrinho">
+          🛒 <span class="cart-count" id="cart-count">0</span>
+        </button>
+        <button type="button" class="nav-btn acesso-btn" onclick="openAdminLogin()">Acesso</button>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero" id="hero">
+    <div class="hero-bg"></div>
+    <div class="container hero-content">
+      <div class="hero-badge">⭐ 4,4 • Breu Branco - PA</div>
+      <h1>Bob <span>Burguer</span></h1>
+      <p class="hero-sub">Os melhores hambúrgueres da região. Sabor artesanal, entrega rápida.</p>
+      <div class="hero-info">
+        <span>📍 Av. Getúlio Vargas - Centro</span>
+        <span>🕐 Aberto agora</span>
+      </div>
+      <button class="btn btn-primary btn-lg" onclick="scrollToMenu()">Peça Agora 🔥</button>
+    </div>
+  </section>
+
+  <section class="menu-controls container">
+    <div class="search-box">
+      <input type="search" id="search-input" placeholder="Buscar lanche, balde, combo..." autocomplete="off">
+      <span class="search-icon">🔍</span>
+    </div>
+    <div class="categories" id="categories">
+      <button class="cat-btn active" data-cat="all">Todos</button>
+      <button class="cat-btn" data-cat="lanches">Lanches</button>
+      <button class="cat-btn" data-cat="baldes">Baldes</button>
+      <button class="cat-btn" data-cat="combos">Combos</button>
+      <button class="cat-btn" data-cat="petiscos">Petiscos</button>
+      <button class="cat-btn" data-cat="bebidas">Bebidas</button>
+      <button class="cat-btn" data-cat="sucos">Sucos</button>
+      <button class="cat-btn" data-cat="adicionais">Adicionais</button>
+    </div>
+  </section>
+
+  <section class="menu section" id="menu">
+    <div class="container">
+      <h2 class="section-title">Cardápio</h2>
+      <div class="products-grid" id="products-grid"></div>
+      <p class="no-results" id="no-results" hidden>Nenhum produto encontrado.</p>
+    </div>
+  </section>
+
+  <section class="info-section section">
+    <div class="container info-grid">
+      <div class="info-card">
+        <span class="info-icon">📍</span>
+        <h3>Endereço</h3>
+        <p>Av. Getúlio Vargas - Centro<br>Breu Branco - PA<br>CEP 68488-000</p>
+      </div>
+      <div class="info-card">
+        <span class="info-icon">⭐</span>
+        <h3>Avaliação</h3>
+        <p>4,4 estrelas<br>Amado pela cidade</p>
+      </div>
+      <div class="info-card">
+        <span class="info-icon">📱</span>
+        <h3>Contato</h3>
+        <p>WhatsApp: (94) 99167-0523<br>@bob_burguerr</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-logo">🍔 Bob Burguer</div>
+      <p>Breu Branco - PA • Av. Getúlio Vargas - Centro</p>
+      <p style="margin-top:12px;font-size:.8rem">© 2026 Bob Burguer. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <button class="float-btn back-top" id="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+  <!-- Login Admin: somente NOME e SENHA -->
+  <div class="modal" id="modal-admin-login">
+    <div class="modal-backdrop" onclick="closeAllModals()"></div>
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeAllModals()">×</button>
+      <h2>🔒 Área de Acesso</h2>
+      <form id="admin-login-form" onsubmit="adminLogin(event)">
+        <div class="form-group">
+          <label for="adm-user">NOME</label>
+          <input type="text" id="adm-user" autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label for="adm-pass">SENHA</label>
+          <input type="password" id="adm-pass" autocomplete="current-password" required>
+        </div>
+        <p class="form-msg error" id="adm-login-err" hidden>Usuário ou senha incorretos</p>
+        <button type="submit" class="btn btn-primary btn-block">ENTRAR</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Admin Panel -->
+  <div id="admin-panel" class="admin-panel" hidden>
+    <div class="admin-panel-inner">
+      <div class="admin-top">
+        <h2>⚙️ Admin Bob Burguer</h2>
+        <button type="button" class="btn btn-ghost" style="width:auto;margin:0" onclick="adminLogout()">Sair</button>
+      </div>
+      <div class="admin-mode-banner">🔒 Modo local: os pedidos ficam salvos neste navegador/dispositivo.</div>
+      <div class="admin-tabs">
+        <button type="button" class="admin-tab active" data-atab="pedidos">📋 Pedidos</button>
+        <button type="button" class="admin-tab" data-atab="config">⚙️ Config</button>
+        <button type="button" class="admin-tab" data-atab="pagamento">💳 Mercado Pago</button>
+      </div>
+      <div id="atab-pedidos" class="atab-content">
+        <div class="admin-stats" id="admin-stats"></div>
+        <div class="admin-filters">
+          <select id="af-pay" onchange="adminRenderOrders()">
+            <option value="todos">Pagamento: todos</option>
+            <option value="PENDING">Pendentes</option>
+            <option value="APPROVED">Aprovados</option>
+            <option value="REJECTED">Rejeitados</option>
+            <option value="CANCELLED">Cancelados</option>
+          </select>
+          <select id="af-tipo" onchange="adminRenderOrders()">
+            <option value="todos">Entrega + Retirada</option>
+            <option value="entrega">Só entrega</option>
+            <option value="retirada">Só retirada</option>
+          </select>
+          <input type="search" id="af-busca" placeholder="Buscar nome, tel, nº..." oninput="adminRenderOrders()">
+          <button type="button" class="btn btn-secondary" style="width:auto;padding:10px 14px;font-size:.85rem" onclick="adminLoadOrders()">Atualizar</button>
+        </div>
+        <div id="admin-orders"></div>
+      </div>
+      <div id="atab-config" class="atab-content" hidden>
+        <div id="admin-cfg-msg"></div>
+        <div class="form-group">
+          <label>Taxa de entrega (R$)</label>
+          <input type="number" id="acfg-frete" step="0.01" min="0">
+        </div>
+        <div class="form-group">
+          <label>WhatsApp (números com DDI)</label>
+          <input type="text" id="acfg-whatsapp">
+        </div>
+        <div class="form-group">
+          <label>Horário</label>
+          <input type="text" id="acfg-horario">
+        </div>
+        <div class="form-group">
+          <label>Endereço</label>
+          <input type="text" id="acfg-endereco">
+        </div>
+        <button type="button" class="btn btn-primary" style="width:auto" onclick="adminSaveConfig()">Salvar</button>
+      </div>
+      <div id="atab-pagamento" class="atab-content" hidden>
+        <div id="mp-cfg-msg"></div>
+        <div class="form-group">
+          <label>Mercado Pago</label>
+          <select id="mp-enabled"><option value="false">Desativado</option><option value="true">Ativado</option></select>
+        </div>
+        <div class="form-group">
+          <label>Ambiente</label>
+          <select id="mp-environment"><option value="test">TESTE</option><option value="production">PRODUÇÃO</option></select>
+        </div>
+        <div class="form-group"><label>Public Key</label><input type="text" id="mp-public-key" autocomplete="off"></div>
+        <div class="form-group">
+          <label>Access Token</label>
+          <input type="password" id="mp-access-token" autocomplete="new-password" placeholder="Cole o Access Token">
+          <p class="form-msg">O token fica no servidor e não é exibido novamente.</p>
+        </div>
+        <div class="form-group">
+          <label>Webhook Secret</label>
+          <input type="password" id="mp-webhook-secret" autocomplete="new-password" placeholder="Opcional até configurar Webhooks">
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="btn btn-primary" style="width:auto" onclick="mpSaveSettings()">Salvar</button>
+          <button type="button" class="btn btn-secondary" style="width:auto" onclick="mpTestSettings()">Testar conexão</button>
+        </div>
+        <div id="mp-status" style="margin-top:14px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: produto + adicionais -->
+  <div class="modal" id="modal-product">
+    <div class="modal-backdrop" onclick="closeAllModals()"></div>
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeAllModals()">×</button>
+      <div class="product-preview" id="product-preview"></div>
+      <div id="additionals-section" hidden>
+        <h2 style="font-size:1.1rem;margin-bottom:8px">Adicionais</h2>
+        <div class="add-list" id="additionals-list"></div>
+      </div>
+      <div class="cart-item-qty" style="justify-content:center;margin-bottom:16px">
+        <button class="qty-btn" type="button" onclick="changeModalQty(-1)">−</button>
+        <span id="modal-qty" style="font-weight:700;min-width:24px;text-align:center">1</span>
+        <button class="qty-btn" type="button" onclick="changeModalQty(1)">+</button>
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-add-cart" onclick="confirmAddToCart()">
+        Adicionar ao carrinho
+      </button>
+    </div>
+  </div>
+
+  <!-- Carrinho -->
+  <div class="modal" id="modal-cart">
+    <div class="modal-backdrop" onclick="closeAllModals()"></div>
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeAllModals()">×</button>
+      <h2>Seu Pedido</h2>
+      <div id="cart-items"></div>
+      <div class="cart-totals">
+        <div class="total-row"><span>Subtotal</span><span id="cart-subtotal">R$ 0,00</span></div>
+        <div class="total-row"><span>Entrega</span><span id="cart-frete">—</span></div>
+        <div class="total-row total"><span>Total</span><span id="cart-total">R$ 0,00</span></div>
+      </div>
+      <button class="btn btn-primary btn-block" id="btn-checkout" onclick="openDeliveryChoice()" disabled>
+        Continuar →
+      </button>
+    </div>
+  </div>
+
+  <!-- Entrega ou Retirada -->
+  <div class="modal" id="modal-delivery-choice">
+    <div class="modal-backdrop" onclick="closeAllModals()"></div>
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeAllModals()">×</button>
+      <h2>Como você deseja receber seu pedido?</h2>
+      <div class="choice-btns">
+        <button class="choice-btn" onclick="chooseDelivery()">
+          <span class="choice-icon">🛵</span>
+          <span>ENTREGA</span>
+          <small>Informe o endereço</small>
+        </button>
+        <button class="choice-btn" onclick="choosePickup()">
+          <span class="choice-icon">🏪</span>
+          <span>BUSCAR NO LOCAL</span>
+          <small>Grátis</small>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Formulário entrega -->
+  <div class="modal" id="modal-delivery">
+    <div class="modal-backdrop" onclick="closeAllModals()"></div>
+    <div class="modal-content modal-lg">
+      <button class="modal-close" onclick="closeAllModals()">×</button>
+      <h2>Dados para Entrega</h2>
+      <form id="delivery-form" onsubmit="submitCustomer(event)">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cli-nome">Nome *</label>
+            <input type="text" id="cli-nome" required autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label for="cli-tel">Telefone *</label>
+            <input type="tel" id="cli-tel" required placeholder="(94) 9xxxx-xxxx" autocomplete="tel">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="cli-cep">CEP *</label>
+          <div class="cep-row">
+            <input type="text" id="cli-cep" required maxlength="9" inputmode="numeric" placeholder="00000-000">
+            <button type="button" class="btn btn-secondary" onclick="lookupCEP()">Buscar</button>
+          </div>
+          <p class="form-msg" id="cep-msg"></p>
+        </div>
+        <div class="form-row">
+          <div class="form-group flex-2">
+            <label for="cli-rua">Rua *</label>
+            <input type="text" id="cli-rua" required>
+          </div>
+          <div class="form-group">
+            <label for="cli-num">Número *</label>
+            <input type="text" id="cli-num" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cli-bairro">Bairro *</label>
+            <input type="text" id="cli-bairro" required>
+          </div>
+          <div class="form-group">
+            <label for="cli-cidade">Cidade *</label>
+            <input type="text" id="cli-cidade" required value="Breu Branco" readonly>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="cli-comp">Complemento</label>
+          <input type="text" id="cli-comp" placeholder="Apto, casa...">
+        </div>
+        <div class="form-group">
+          <label for="cli-ref">Ponto de referência</label>
+          <input type="text" id="cli-ref">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="btn-continue-delivery">Ver resumo →</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Formulário retirada -->
+  <div class="modal" id="modal-pickup">
+    <div class="modal-backdrop" onclick="closeAllModals()"></div>
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeAllModals()">×</button>
+      <h2>Retirada no local</h2>
+      <p style="text-align:center;color:var(--gray);margin-bottom:16px">
+        Seu pedido ficará disponível para retirada no estabelecimento.
+      </p>
+      <div class="summary-box" style="text-align:center">
+        <strong>Av. Getúlio Vargas - Centro</strong><br>
+        Breu Branco - PA · CEP 68488-000
+      </div>
+      <form onsubmit="submitCustomer(event)">
+        <div class="form-group">
+          <label for="pick-nome">Nome *</label>
+          <input type="text" id="pick-nome" required autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label for="pick-tel">Telefone *</label>
+          <input type="tel" id="pick-tel" required placeholder="(94) 9xxxx-xxxx" autocomplete="tel">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Ver resumo →</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Resumo final -->
+  <div class="modal" id="modal-summary">
+    <div class="modal-backdrop" onclick="closeAllModals()"></div>
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeAllModals()">×</button>
+      <h2>Resumo do Pedido</h2>
+      <div class="summary-box" id="order-summary"></div>
+      <button class="btn btn-primary btn-block btn-lg" id="btn-pay" onclick="payOrder()">
+        PAGAR PEDIDO
+      </button>
+      <p class="form-msg error" id="pay-error" hidden></p>
+    </div>
+  </div>
+
+  <script>
+(function () {
+  'use strict';
+
+  const API = '';
+  let products = [];
+  let lunchAdds = [];
+  let sideAdds = [];
+  let config = { deliveryFee: 5, allowedCity: 'Breu Branco', allowedUf: 'PA' };
+  let cart = [];
+  let currentProduct = null;
+  let modalQty = 1;
+  let deliveryType = null;
+  let customer = null;
+  let address = null;
+  let adminToken = sessionStorage.getItem('bob_admin_token') || '';
+  let adminOrders = [];
+
+  // ---- Armazenamento local (o site é estático, não tem servidor) ----
+  function loadLocalOrders() {
+    try { return JSON.parse(localStorage.getItem('bob_orders') || '[]'); } catch (e) { return []; }
+  }
+  function saveLocalOrders(orders) {
+    localStorage.setItem('bob_orders', JSON.stringify(orders));
+  }
+  function loadLocalConfig() {
+    try { return JSON.parse(localStorage.getItem('bob_config') || 'null'); } catch (e) { return null; }
+  }
+  function saveLocalConfig(cfg) {
+    localStorage.setItem('bob_config', JSON.stringify(cfg));
+  }
+
+  function formatMoney(v) {
+    return 'R$ ' + Number(v).toFixed(2).replace('.', ',');
+  }
+  function onlyDigits(s) { return (s || '').replace(/\D/g, ''); }
+
+  function cartKey(item) {
+    const adds = (item.additionalIds || []).slice().sort().join(',');
+    return item.productId + '|' + adds;
+  }
+
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  window.closeAllModals = function () {
+    document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
+    document.body.style.overflow = '';
+  };
+
+  window.scrollToMenu = () => document.getElementById('menu').scrollIntoView({ behavior: 'smooth' });
+  window.goHome = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // Theme
+  (function initTheme() {
+    const saved = localStorage.getItem('bob_theme') || 'dark';
+    if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    document.getElementById('theme-toggle').textContent = saved === 'light' ? '☀️' : '🌙';
+  })();
+  document.getElementById('theme-toggle').onclick = () => {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    if (isLight) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('bob_theme', 'dark');
+      document.getElementById('theme-toggle').textContent = '🌙';
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+      localStorage.setItem('bob_theme', 'light');
+      document.getElementById('theme-toggle').textContent = '☀️';
+    }
+  };
+
+  // Cardápio embutido (fallback se a API estiver offline)
+  const MENU_FALLBACK = {"products":[{"id":"x-tudo","name":"X-Tudo","description":"Carne caseira, queijo, ovo, presunto, salsicha, calabresa, bacon, alface e tomate.","category":"lanches","price":35,"emoji":"🍔","allowsAdditionals":true},{"id":"x-bacon","name":"X-Bacon","description":"Carne caseira, queijo, presunto, bacon, alface e tomate.","category":"lanches","price":32,"emoji":"🥓","allowsAdditionals":true},{"id":"x-brazil-agridoce","name":"X-Brazil agridoce","description":"Carne caseira, queijo, presunto, bacon, abacaxi, alface e tomate.","category":"lanches","price":25,"emoji":"🍍","allowsAdditionals":true},{"id":"x-banana","name":"X-Banana","description":"Carne caseira, queijo, presunto, banana, alface e tomate.","category":"lanches","price":23,"emoji":"🍌","allowsAdditionals":true},{"id":"x-calabresa","name":"X-Calabresa","description":"Carne caseira, queijo, presunto, calabresa, alface e tomate.","category":"lanches","price":22,"emoji":"🌶️","allowsAdditionals":true},{"id":"x-salada","name":"X-Salada","description":"Frango, queijo, presunto, ovo, alface e tomate.","category":"lanches","price":22,"emoji":"🥗","allowsAdditionals":true},{"id":"x-burger-especial","name":"X-Burger Especial","description":"Carne caseira, queijo, presunto, ovo, alface e tomate.","category":"lanches","price":22,"emoji":"⭐","allowsAdditionals":true},{"id":"hamburguer","name":"Hambúrguer","description":"Carne caseira, queijo, presunto, salsicha, alface e tomate.","category":"lanches","price":20,"emoji":"🍔","allowsAdditionals":true},{"id":"hamburguer-simples","name":"Hambúrguer Simples","description":"Queijo, presunto, salsicha, alface e tomate.","category":"lanches","price":15,"emoji":"🍞","allowsAdditionals":true},{"id":"misto","name":"Misto","description":"Queijo, presunto, ovo, alface e tomate.","category":"lanches","price":10,"emoji":"🥪","allowsAdditionals":true},{"id":"balde-650","name":"Balde 650 g","description":"650 g de frango, baião, macaxeira, salada, farofa e molho.","category":"baldes","price":55,"emoji":"🍗","allowsAdditionals":false},{"id":"balde-1kg","name":"Balde 1 kg","description":"1 kg de frango, baião, macaxeira, salada, farofa e molho.","category":"baldes","price":85,"emoji":"🍗","allowsAdditionals":false},{"id":"balde-2kg","name":"Balde 2 kg","description":"2 kg de frango, baião, macaxeira, salada, farofa e molho.","category":"baldes","price":165,"emoji":"🍗","allowsAdditionals":false},{"id":"franguinho-650","name":"Franguinho individual — 650 g","description":"650 g de frango frito individual.","category":"baldes","price":45,"emoji":"🍗","allowsAdditionals":false},{"id":"franguinho-1kg","name":"Franguinho individual — 1 kg","description":"1 kg de frango frito individual.","category":"baldes","price":75,"emoji":"🍗","allowsAdditionals":false},{"id":"franguinho-2kg","name":"Franguinho individual — 2 kg","description":"2 kg de frango frito individual.","category":"baldes","price":140,"emoji":"🍗","allowsAdditionals":false},{"id":"carne-chapa-300","name":"Carne na chapa — 300 g","description":"Baião, macaxeira frita, salada e farofa.","category":"petiscos","price":40,"emoji":"🥩","allowsAdditionals":false},{"id":"carne-chapa-450","name":"Carne na chapa — 450 g","description":"Baião, macaxeira frita, salada e farofa.","category":"petiscos","price":50,"emoji":"🥩","allowsAdditionals":false},{"id":"carne-chapa-600","name":"Carne na chapa — 600 g","description":"Baião, macaxeira frita, salada e farofa.","category":"petiscos","price":60,"emoji":"🥩","allowsAdditionals":false},{"id":"carne-chapa-800","name":"Carne na chapa — 800 g","description":"Baião, batata frita, salada e farofa.","category":"petiscos","price":95,"emoji":"🥩","allowsAdditionals":false},{"id":"batata-300","name":"Batata frita — 300 g","description":"Porção de batata frita crocante 300 g.","category":"petiscos","price":20,"emoji":"🍟","allowsAdditionals":false},{"id":"batata-600","name":"Batata frita — 600 g","description":"Porção de batata frita crocante 600 g.","category":"petiscos","price":40,"emoji":"🍟","allowsAdditionals":false},{"id":"picanha-250","name":"Picanha na chapa — 250 g","description":"Baião, macaxeira frita, salada e farofa.","category":"petiscos","price":35,"emoji":"🥩","allowsAdditionals":false},{"id":"picanha-500","name":"Picanha na chapa — 500 g","description":"Baião, macaxeira frita, salada e farofa.","category":"petiscos","price":75,"emoji":"🥩","allowsAdditionals":false},{"id":"file-peixe-200","name":"Filé de peixe — 200 g","description":"Baião, macaxeira frita, salada e farofa.","category":"petiscos","price":30,"emoji":"🐟","allowsAdditionals":false},{"id":"file-peixe-500","name":"Filé de peixe — 500 g","description":"Baião, macaxeira frita, salada e farofa.","category":"petiscos","price":60,"emoji":"🐟","allowsAdditionals":false},{"id":"combo-1","name":"COMBO 1","description":"Balde de frango 650 g individual + 2 X-Burger + Batata 300 g + Molho + Refrigerante 1 L","category":"combos","price":115,"emoji":"📦","allowsAdditionals":false},{"id":"combo-2","name":"COMBO 2","description":"Balde de frango 1 kg individual + 2 X-Bacon + Refrigerante 2 L","category":"combos","price":130,"emoji":"📦","allowsAdditionals":false},{"id":"combo-3","name":"COMBO 3","description":"Balde de frango 2 kg individual + 1 X-Tudo + 1 X-Calabresa + Molho + Batata 600 g + Refrigerante 2 L","category":"combos","price":225,"emoji":"📦","allowsAdditionals":false},{"id":"combo-petisco","name":"COMBO PETISCO","description":"Carne na chapa 300 g individual + Batata 300 g + Molho + Refrigerante 1 L","category":"combos","price":56,"emoji":"📦","allowsAdditionals":false},{"id":"coca-lata","name":"Coca-Cola lata","description":"Refrigerante Coca-Cola lata.","category":"bebidas","price":8,"emoji":"🥤","allowsAdditionals":false},{"id":"coca-1l","name":"Coca-Cola 1 L","description":"Refrigerante Coca-Cola 1 litro.","category":"bebidas","price":10,"emoji":"🥤","allowsAdditionals":false},{"id":"coca-2l","name":"Coca-Cola 2 L","description":"Refrigerante Coca-Cola 2 litros.","category":"bebidas","price":12,"emoji":"🥤","allowsAdditionals":false},{"id":"guarana-1l","name":"Guaraná 1 L","description":"Refrigerante Guaraná 1 litro.","category":"bebidas","price":14,"emoji":"🥤","allowsAdditionals":false},{"id":"guarana-2l","name":"Guaraná 2 L","description":"Refrigerante Guaraná 2 litros.","category":"bebidas","price":16,"emoji":"🥤","allowsAdditionals":false},{"id":"suco-lata","name":"Suco natural lata","description":"Suco natural em lata.","category":"bebidas","price":10,"emoji":"🧃","allowsAdditionals":false},{"id":"agua","name":"Água mineral","description":"Água mineral.","category":"bebidas","price":5,"emoji":"💧","allowsAdditionals":false},{"id":"suco-caju","name":"Suco de Caju","description":"Suco natural de caju.","category":"sucos","price":7,"emoji":"🍹","allowsAdditionals":false},{"id":"suco-goiaba","name":"Suco de Goiaba","description":"Suco natural de goiaba.","category":"sucos","price":7,"emoji":"🍹","allowsAdditionals":false},{"id":"suco-acerola","name":"Suco de Acerola","description":"Suco natural de acerola.","category":"sucos","price":7,"emoji":"🍹","allowsAdditionals":false},{"id":"suco-abacaxi","name":"Suco de Abacaxi","description":"Suco natural de abacaxi.","category":"sucos","price":7,"emoji":"🍹","allowsAdditionals":false},{"id":"suco-cupuacu","name":"Suco de Cupuaçu","description":"Suco natural de cupuaçu.","category":"sucos","price":7,"emoji":"🍹","allowsAdditionals":false},{"id":"suco-maracuja","name":"Suco de Maracujá","description":"Suco natural de maracujá.","category":"sucos","price":7,"emoji":"🍹","allowsAdditionals":false},{"id":"jarra-suco","name":"Jarra de suco","description":"Jarra de suco natural.","category":"sucos","price":25,"emoji":"🍹","allowsAdditionals":false},{"id":"add-macaxeira-300","name":"300 g de Macaxeira","description":"Porção de macaxeira 300 g.","category":"adicionais","price":10,"emoji":"🥔","allowsAdditionals":false},{"id":"add-molho","name":"Molho","description":"Porção de molho.","category":"adicionais","price":4,"emoji":"🫙","allowsAdditionals":false},{"id":"add-salada","name":"Salada","description":"Porção de salada.","category":"adicionais","price":4,"emoji":"🥗","allowsAdditionals":false},{"id":"add-baiao","name":"Baião","description":"Porção de baião.","category":"adicionais","price":5,"emoji":"🍚","allowsAdditionals":false},{"id":"add-farofa","name":"Farofa","description":"Porção de farofa.","category":"adicionais","price":4,"emoji":"🥣","allowsAdditionals":false}],"additionals":{"lunch":[{"id":"add-queijo","name":"Queijo","price":10,"active":true},{"id":"add-ovo","name":"Ovo","price":3,"active":true},{"id":"add-bacon","name":"Bacon","price":7,"active":true},{"id":"add-banana","name":"Banana","price":5,"active":true},{"id":"add-salsicha","name":"Salsicha","price":2,"active":true},{"id":"add-presunto","name":"Presunto","price":4,"active":true}],"sides":[{"id":"add-macaxeira-300","name":"300 g de Macaxeira","price":10,"active":true},{"id":"add-molho","name":"Molho","price":4,"active":true},{"id":"add-salada","name":"Salada","price":4,"active":true},{"id":"add-baiao","name":"Baião","price":5,"active":true},{"id":"add-farofa","name":"Farofa","price":4,"active":true}]},"config":{"deliveryFee":5,"schedule":"Seg–Dom: 18h às 23h","address":"Av. Getúlio Vargas - Centro, Breu Branco - PA, CEP 68488-000","storeName":"Bob Burguer","allowedCity":"Breu Branco","allowedUf":"PA"}};
+
+  // Load menu from backend
+  async function loadMenu() {
+    let loaded = false;
+    try {
+      const res = await fetch(API + '/api/menu');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.products && data.products.length) {
+          products = data.products;
+          lunchAdds = (data.additionals && data.additionals.lunch) || [];
+          sideAdds = (data.additionals && data.additionals.sides) || [];
+          if (data.config) config = { ...config, ...data.config };
+          loaded = true;
+        }
+      }
+    } catch (e) {
+      console.warn('API indisponível, usando cardápio local');
+    }
+    if (!loaded) {
+      products = MENU_FALLBACK.products || [];
+      lunchAdds = (MENU_FALLBACK.additionals && MENU_FALLBACK.additionals.lunch) || [];
+      sideAdds = (MENU_FALLBACK.additionals && MENU_FALLBACK.additionals.sides) || [];
+      if (MENU_FALLBACK.config) config = { ...config, ...MENU_FALLBACK.config };
+    }
+    // aplica configurações salvas localmente (frete etc. definidos no painel admin)
+    const localCfg = loadLocalConfig();
+    if (localCfg) config = { ...config, ...localCfg };
+    renderProducts();
+  }
+
+  function renderProducts(filterCat, search) {
+    filterCat = filterCat || document.querySelector('.cat-btn.active')?.dataset.cat || 'all';
+    search = search !== undefined ? search : (document.getElementById('search-input').value || '');
+    const grid = document.getElementById('products-grid');
+    const noRes = document.getElementById('no-results');
+    const q = search.toLowerCase().trim();
+    let list = products.slice();
+    if (filterCat !== 'all') list = list.filter(p => p.category === filterCat);
+    if (q) list = list.filter(p => p.name.toLowerCase().includes(q) || (p.description || '').toLowerCase().includes(q));
+    if (!list.length) {
+      grid.innerHTML = '';
+      noRes.hidden = false;
+      return;
+    }
+    noRes.hidden = true;
+    grid.innerHTML = list.map(p => `
+      <article class="product-card" onclick="selectProduct('${p.id}')">
+        <div class="product-img">
+          <span class="badge-cat">${p.category}</span>
+          ${p.emoji || '🍔'}
+        </div>
+        <div class="product-body">
+          <h3 class="product-name">${p.name}</h3>
+          <p class="product-desc">${p.description || ''}</p>
+          <div class="product-footer">
+            <span class="product-price">${formatMoney(p.price)}</span>
+            <button class="btn-add" onclick="event.stopPropagation();selectProduct('${p.id}')">+</button>
+          </div>
+        </div>
+      </article>
+    `).join('');
+  }
+
+  document.getElementById('categories').addEventListener('click', e => {
+    const btn = e.target.closest('.cat-btn');
+    if (!btn) return;
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderProducts(btn.dataset.cat);
+  });
+  document.getElementById('search-input').addEventListener('input', e => renderProducts(undefined, e.target.value));
+
+  window.selectProduct = function (id) {
+    currentProduct = products.find(p => p.id === id);
+    if (!currentProduct) return;
+    modalQty = 1;
+    document.getElementById('modal-qty').textContent = '1';
+    document.getElementById('product-preview').innerHTML = `
+      <div class="emoji">${currentProduct.emoji || '🍔'}</div>
+      <div class="name">${currentProduct.name}</div>
+      <div class="price">${formatMoney(currentProduct.price)}</div>
+      <p style="color:var(--gray);font-size:.85rem;margin-top:6px">${currentProduct.description || ''}</p>
+    `;
+    const sec = document.getElementById('additionals-section');
+    const list = document.getElementById('additionals-list');
+    if (currentProduct.allowsAdditionals && lunchAdds.length) {
+      sec.hidden = false;
+      list.innerHTML = lunchAdds.map(a => `
+        <div class="add-item">
+          <label>
+            <input type="checkbox" value="${a.id}" data-price="${a.price}">
+            ${a.name}
+          </label>
+          <span class="add-price">+ ${formatMoney(a.price)}</span>
+        </div>
+      `).join('');
+    } else {
+      sec.hidden = true;
+      list.innerHTML = '';
+    }
+    updateModalAddBtn();
+    openModal('modal-product');
+  };
+
+  window.changeModalQty = function (d) {
+    modalQty = Math.max(1, Math.min(99, modalQty + d));
+    document.getElementById('modal-qty').textContent = String(modalQty);
+    updateModalAddBtn();
+  };
+
+  function updateModalAddBtn() {
+    if (!currentProduct) return;
+    let add = 0;
+    document.querySelectorAll('#additionals-list input:checked').forEach(el => {
+      add += parseFloat(el.dataset.price) || 0;
+    });
+    const total = (currentProduct.price + add) * modalQty;
+    document.getElementById('btn-add-cart').textContent = `Adicionar · ${formatMoney(total)}`;
+  }
+  document.getElementById('additionals-list').addEventListener('change', updateModalAddBtn);
+
+  window.confirmAddToCart = function () {
+    if (!currentProduct) return;
+    const additionalIds = [];
+    document.querySelectorAll('#additionals-list input:checked').forEach(el => additionalIds.push(el.value));
+    const item = {
+      productId: currentProduct.id,
+      name: currentProduct.name,
+      emoji: currentProduct.emoji,
+      unitPrice: currentProduct.price,
+      quantity: modalQty,
+      additionalIds,
+      additionals: additionalIds.map(id => {
+        const a = lunchAdds.find(x => x.id === id) || sideAdds.find(x => x.id === id);
+        return a ? { id: a.id, name: a.name, price: a.price } : null;
+      }).filter(Boolean)
+    };
+    const key = cartKey(item);
+    const existing = cart.find(c => cartKey(c) === key);
+    if (existing) existing.quantity += item.quantity;
+    else cart.push(item);
+    updateCartUI();
+    closeAllModals();
+    openCart();
+  };
+
+  function lineTotal(item) {
+    const add = (item.additionals || []).reduce((s, a) => s + a.price, 0);
+    return (item.unitPrice + add) * item.quantity;
+  }
+  function cartSubtotal() {
+    return cart.reduce((s, i) => s + lineTotal(i), 0);
+  }
+
+  function updateCartUI() {
+    const count = cart.reduce((s, i) => s + i.quantity, 0);
+    document.getElementById('cart-count').textContent = count;
+  }
+
+  window.openCart = function () {
+    renderCart();
+    openModal('modal-cart');
+  };
+
+  function renderCart() {
+    const el = document.getElementById('cart-items');
+    const btn = document.getElementById('btn-checkout');
+    if (!cart.length) {
+      el.innerHTML = '<p style="text-align:center;color:var(--gray)">Carrinho vazio</p>';
+      btn.disabled = true;
+      document.getElementById('cart-subtotal').textContent = 'R$ 0,00';
+      document.getElementById('cart-frete').textContent = '—';
+      document.getElementById('cart-total').textContent = 'R$ 0,00';
+      return;
+    }
+    btn.disabled = false;
+    el.innerHTML = cart.map((item, idx) => {
+      const adds = (item.additionals || []).map(a => a.name).join(', ');
+      return `
+        <div class="cart-item">
+          <span class="cart-item-emoji">${item.emoji || '🍔'}</span>
+          <div class="cart-item-info">
+            <div class="cart-item-name">${item.name}</div>
+            ${adds ? `<div class="cart-item-adds">+ ${adds}</div>` : ''}
+            <div class="cart-item-qty">
+              <button class="qty-btn" onclick="changeQty(${idx},-1)">−</button>
+              <span>${item.quantity}</span>
+              <button class="qty-btn" onclick="changeQty(${idx},1)">+</button>
+            </div>
+          </div>
+          <strong>${formatMoney(lineTotal(item))}</strong>
+        </div>
+      `;
+    }).join('');
+    const sub = cartSubtotal();
+    document.getElementById('cart-subtotal').textContent = formatMoney(sub);
+    document.getElementById('cart-frete').textContent = deliveryType === 'entrega'
+      ? formatMoney(config.deliveryFee || 0)
+      : deliveryType === 'retirada' ? 'Grátis' : 'A definir';
+    const frete = deliveryType === 'entrega' ? (config.deliveryFee || 0) : 0;
+    document.getElementById('cart-total').textContent = formatMoney(sub + (deliveryType ? frete : 0));
+  }
+
+  window.changeQty = function (idx, d) {
+    cart[idx].quantity += d;
+    if (cart[idx].quantity <= 0) cart.splice(idx, 1);
+    updateCartUI();
+    renderCart();
+  };
+
+  window.openDeliveryChoice = function () {
+    if (!cart.length) return;
+    closeAllModals();
+    openModal('modal-delivery-choice');
+  };
+
+  window.chooseDelivery = function () {
+    deliveryType = 'entrega';
+    closeAllModals();
+    openModal('modal-delivery');
+  };
+
+  window.choosePickup = function () {
+    deliveryType = 'retirada';
+    address = null;
+    closeAllModals();
+    openModal('modal-pickup');
+  };
+
+  window.lookupCEP = async function () {
+    const input = document.getElementById('cli-cep');
+    const msg = document.getElementById('cep-msg');
+    const cep = onlyDigits(input.value);
+    msg.textContent = '';
+    msg.className = 'form-msg';
+    if (cep.length !== 8) {
+      msg.textContent = 'CEP inválido.';
+      msg.classList.add('error');
+      return;
+    }
+    msg.textContent = 'Consultando...';
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await res.json();
+      if (data.erro) {
+        msg.textContent = 'CEP não encontrado.';
+        msg.classList.add('error');
+        return;
+      }
+      const cidade = (data.localidade || '').trim();
+      const uf = (data.uf || '').trim().toUpperCase();
+      if (cidade.toLowerCase() !== (config.allowedCity || 'Breu Branco').toLowerCase() || uf !== (config.allowedUf || 'PA')) {
+        msg.textContent = `No momento entregamos apenas em ${config.allowedCity} - ${config.allowedUf}.`;
+        msg.classList.add('error');
+        return;
+      }
+      document.getElementById('cli-rua').value = data.logradouro || '';
+      document.getElementById('cli-bairro').value = data.bairro || 'Centro';
+      document.getElementById('cli-cidade').value = cidade;
+      msg.textContent = '✓ CEP válido — Breu Branco - PA';
+      msg.classList.add('success');
+    } catch {
+      msg.textContent = 'Erro ao consultar CEP.';
+      msg.classList.add('error');
+    }
+  };
+
+  document.getElementById('cli-cep')?.addEventListener('input', function () {
+    let v = onlyDigits(this.value);
+    if (v.length > 5) v = v.slice(0, 5) + '-' + v.slice(5, 8);
+    this.value = v;
+  });
+
+  window.submitCustomer = function (e) {
+    e.preventDefault();
+    if (deliveryType === 'entrega') {
+      customer = {
+        name: document.getElementById('cli-nome').value.trim(),
+        phone: document.getElementById('cli-tel').value.trim()
+      };
+      address = {
+        cep: document.getElementById('cli-cep').value.trim(),
+        street: document.getElementById('cli-rua').value.trim(),
+        number: document.getElementById('cli-num').value.trim(),
+        neighborhood: document.getElementById('cli-bairro').value.trim(),
+        city: document.getElementById('cli-cidade').value.trim() || 'Breu Branco',
+        uf: 'PA',
+        complement: document.getElementById('cli-comp').value.trim(),
+        reference: document.getElementById('cli-ref').value.trim()
+      };
+      const msg = document.getElementById('cep-msg');
+      if (!msg.classList.contains('success')) {
+        alert('Valide o CEP antes de continuar (somente Breu Branco - PA).');
+        return;
+      }
+    } else {
+      customer = {
+        name: document.getElementById('pick-nome').value.trim(),
+        phone: document.getElementById('pick-tel').value.trim()
+      };
+      address = null;
+    }
+    showSummary();
+  };
+
+  function showSummary() {
+    const sub = cartSubtotal();
+    const frete = deliveryType === 'entrega' ? (config.deliveryFee || 0) : 0;
+    const total = sub + frete;
+    let html = `<p><strong>Cliente:</strong> ${customer.name}</p>`;
+    html += `<p><strong>Telefone:</strong> ${customer.phone}</p>`;
+    html += `<p><strong>Recebimento:</strong> ${deliveryType === 'entrega' ? 'ENTREGA' : 'RETIRADA'}</p>`;
+    if (address) {
+      html += `<p><strong>Endereço:</strong> ${address.street}, ${address.number}`;
+      if (address.complement) html += ` - ${address.complement}`;
+      html += `<br>${address.neighborhood} — CEP ${address.cep}<br>${address.city} - ${address.uf}`;
+      if (address.reference) html += `<br>Ref: ${address.reference}`;
+      html += `</p>`;
+    }
+    html += `<hr style="border-color:#333;margin:10px 0">`;
+    cart.forEach(item => {
+      const adds = (item.additionals || []).map(a => a.name).join(', ');
+      html += `<p>${item.quantity}x ${item.name}${adds ? ' (+ ' + adds + ')' : ''} — ${formatMoney(lineTotal(item))}</p>`;
+    });
+    html += `<hr style="border-color:#333;margin:10px 0">`;
+    html += `<p>Subtotal: ${formatMoney(sub)}</p>`;
+    html += `<p>Entrega: ${frete ? formatMoney(frete) : 'R$ 0,00'}</p>`;
+    html += `<p style="font-size:1.15rem;margin-top:6px"><strong>TOTAL: ${formatMoney(total)}</strong></p>`;
+    document.getElementById('order-summary').innerHTML = html;
+    document.getElementById('pay-error').hidden = true;
+    closeAllModals();
+    openModal('modal-summary');
+  }
+
+  window.payOrder = async function () {
+    const btn = document.getElementById('btn-pay');
+    const err = document.getElementById('pay-error');
+    err.hidden = true;
+    btn.disabled = true;
+    btn.textContent = 'Processando...';
+
+    const payload = {
+      idempotencyKey: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + '-' + Math.random()),
+      items: cart.map(i => ({
+        productId: i.productId,
+        quantity: i.quantity,
+        additionalIds: i.additionalIds || []
+      })),
+      deliveryType,
+      customer,
+      address
+    };
+
+    try {
+      const res = await fetch(API + '/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Não foi possível iniciar o pagamento.');
+      cart = [];
+      updateCartUI();
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+        return;
+      }
+      throw new Error('O Mercado Pago não retornou a página de pagamento.');
+    } catch (e) {
+      err.hidden = false;
+      err.textContent = e.message || 'Erro ao iniciar pagamento.';
+      btn.disabled = false;
+      btn.textContent = 'PAGAR PEDIDO';
+    }
+  };
+
+  // ========== ADMIN ==========
+  window.openAdminLogin = function () {
+    document.getElementById('adm-login-err').hidden = true;
+    document.getElementById('adm-user').value = '';
+    document.getElementById('adm-pass').value = '';
+    openModal('modal-admin-login');
+  };
+
+  window.adminLogin = async function (e) {
+    e.preventDefault();
+    const username = document.getElementById('adm-user').value.trim();
+    const password = document.getElementById('adm-pass').value;
+    try {
+      const res = await fetch(API + '/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Usuário ou senha incorretos.');
+      adminToken = data.token;
+      sessionStorage.setItem('bob_admin_token', adminToken);
+      closeAllModals();
+      openAdminPanel();
+    } catch (e) {
+      document.getElementById('adm-login-err').textContent = e.message;
+      document.getElementById('adm-login-err').hidden = false;
+    }
+  };
+
+  window.adminLogout = function () {
+    adminToken = '';
+    sessionStorage.removeItem('bob_admin_token');
+    document.getElementById('admin-panel').hidden = true;
+    document.body.style.overflow = '';
+  };
+
+  function openAdminPanel() {
+    document.getElementById('admin-panel').hidden = false;
+    document.body.style.overflow = 'hidden';
+    document.querySelector('.admin-mode-banner').hidden = adminToken !== 'local';
+    adminLoadOrders();
+    adminLoadConfig();
+  }
+
+  document.addEventListener('click', e => {
+    const tab = e.target.closest('.admin-tab');
+    if (!tab) return;
+    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.atab-content').forEach(c => { c.hidden = true; });
+    const el = document.getElementById('atab-' + tab.dataset.atab);
+    if (el) el.hidden = false;
+  });
+
+  async function adminFetch(url, opts = {}) {
+    opts.headers = {
+      ...(opts.headers || {}),
+      Authorization: 'Bearer ' + adminToken,
+      'Content-Type': 'application/json'
+    };
+    const res = await fetch(API + url, opts);
+    if (res.status === 401) {
+      adminLogout();
+      openAdminLogin();
+      throw new Error('Não autorizado');
+    }
+    return res;
+  }
+
+  window.adminLoadOrders = async function () {
+    try {
+      const res = await adminFetch('/api/admin/orders');
+      const data = await res.json();
+      adminOrders = data.orders || [];
+      adminRenderOrders();
+    } catch (e) {
+      adminOrders = loadLocalOrders();
+      adminRenderOrders();
+    }
+  };
+
+  window.adminRenderOrders = function () {
+    let orders = adminOrders.slice();
+    const pay = document.getElementById('af-pay')?.value || 'todos';
+    const tipo = document.getElementById('af-tipo')?.value || 'todos';
+    const q = (document.getElementById('af-busca')?.value || '').toLowerCase().trim();
+    if (pay !== 'todos') orders = orders.filter(o => o.paymentStatus === pay);
+    if (tipo !== 'todos') orders = orders.filter(o => o.deliveryType === tipo);
+    if (q) {
+      orders = orders.filter(o => {
+        const blob = [o.orderNumber, o.id, o.customerName, o.phone, o.address?.street].join(' ').toLowerCase();
+        return blob.includes(q);
+      });
+    }
+
+    const stats = document.getElementById('admin-stats');
+    const all = adminOrders;
+    stats.innerHTML = `
+      <div class="admin-stat"><div class="num">${all.length}</div><div class="lbl">Total</div></div>
+      <div class="admin-stat"><div class="num">${all.filter(o=>o.paymentStatus==='PENDING').length}</div><div class="lbl">Pendentes</div></div>
+      <div class="admin-stat"><div class="num">${all.filter(o=>o.paymentStatus==='APPROVED').length}</div><div class="lbl">Aprovados</div></div>
+      <div class="admin-stat"><div class="num">${all.filter(o=>o.deliveryType==='entrega').length}</div><div class="lbl">Entregas</div></div>
+    `;
+
+    const box = document.getElementById('admin-orders');
+    if (!orders.length) {
+      box.innerHTML = '<p style="text-align:center;color:var(--gray);padding:32px">Nenhum pedido.</p>';
+      return;
+    }
+
+    const statusOpts = ['RECEBIDO','EM PREPARAÇÃO','PRONTO','SAIU PARA ENTREGA','FINALIZADO','CANCELADO'];
+    box.innerHTML = orders.map(o => {
+      const items = (o.items || []).map(i => {
+        const adds = (i.additionals || []).map(a => a.name).join(', ');
+        return `${i.quantity}x ${i.productName}${adds ? ' (+' + adds + ')' : ''}`;
+      }).join('<br>');
+      let end = '';
+      if (o.deliveryType === 'entrega' && o.address) {
+        const e = o.address;
+        end = `<div><strong>📍</strong> ${e.street}, ${e.number}${e.complement ? ' - ' + e.complement : ''}<br>${e.neighborhood} — CEP ${e.cep}</div>`;
+      } else {
+        end = `<div><strong>🏪 Retirada no local</strong></div>`;
+      }
+      const dt = o.createdAt ? new Date(o.createdAt).toLocaleString('pt-BR') : '—';
+      return `
+        <div class="a-order ${o.paymentStatus}">
+          <div class="a-order-top">
+            <div>
+              <div class="a-order-id">PEDIDO #${o.orderNumber}</div>
+              <div style="font-size:.75rem;color:var(--gray)">${dt}</div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <span class="a-badge a-badge-${o.paymentStatus}">${o.paymentStatus}</span>
+              <span class="a-badge ${o.deliveryType === 'entrega' ? 'a-badge-entrega' : 'a-badge-retirada'}">${o.deliveryType === 'entrega' ? 'ENTREGA' : 'RETIRADA'}</span>
+            </div>
+          </div>
+          <div class="a-order-body">
+            <div><strong>👤</strong> ${o.customerName} · ${o.phone}</div>
+            ${end}
+            <div style="margin:6px 0"><strong>🛒</strong><br>${items}</div>
+            <div><strong>Subtotal:</strong> ${formatMoney(o.subtotal)} · <strong>Entrega:</strong> ${formatMoney(o.deliveryFee)} · <strong>Total:</strong> ${formatMoney(o.total)}</div>
+            <div><strong>Status pedido:</strong> ${o.orderStatus}</div>
+          </div>
+          <div class="a-order-actions">
+            <select onchange="adminSetOrderStatus('${o.id}', this.value)">
+              ${statusOpts.map(s => `<option value="${s}" ${s === o.orderStatus ? 'selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  window.adminSetOrderStatus = async function (id, orderStatus) {
+    try {
+      await adminFetch('/api/admin/orders/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        body: JSON.stringify({ orderStatus })
+      });
+      await adminLoadOrders();
+    } catch (e) {
+      alert('Erro ao atualizar status');
+    }
+  };
+
+  async function adminLoadConfig() {
+    try {
+      const res = await adminFetch('/api/admin/config');
+      const c = await res.json();
+      document.getElementById('acfg-frete').value = c.deliveryFee ?? 5;
+      document.getElementById('acfg-whatsapp').value = c.whatsapp || '';
+      document.getElementById('acfg-horario').value = c.schedule || '';
+      document.getElementById('acfg-endereco').value = c.address || '';
+    } catch {}
+  }
+
+  window.adminSaveConfig = async function () {
+    const newCfg = {
+      deliveryFee: parseFloat(document.getElementById('acfg-frete').value) || 0,
+      whatsapp: document.getElementById('acfg-whatsapp').value,
+      schedule: document.getElementById('acfg-horario').value,
+      address: document.getElementById('acfg-endereco').value
+    };
+    try {
+      await adminFetch('/api/admin/config', { method: 'PUT', body: JSON.stringify(newCfg) });
+      config.deliveryFee = newCfg.deliveryFee;
+      document.getElementById('admin-cfg-msg').innerHTML = '<p class="form-msg success">Salvo!</p>';
+      setTimeout(() => { document.getElementById('admin-cfg-msg').innerHTML = ''; }, 2000);
+    } catch {
+      alert('Erro ao salvar');
+    }
+  };
+
+  window.addEventListener('scroll', () => {
+    document.getElementById('back-top').classList.toggle('visible', window.scrollY > 400);
+  });
+
+  // ========== MERCADO PAGO ADMIN ==========
+  async function mpLoadSettings() {
+    try {
+      const res = await adminFetch('/api/admin/settings/mercadopago');
+      const s = await res.json();
+      document.getElementById('mp-enabled').value = String(!!s.enabled);
+      document.getElementById('mp-environment').value = s.environment || 'test';
+      document.getElementById('mp-public-key').value = s.publicKey || '';
+      document.getElementById('mp-access-token').value = '';
+      document.getElementById('mp-webhook-secret').value = '';
+      document.getElementById('mp-status').textContent =
+        s.hasAccessToken ? `Token salvo: ${s.accessTokenMasked || '••••'}` : 'Nenhum Access Token salvo.';
+    } catch {
+      document.getElementById('mp-status').textContent = 'Não foi possível carregar as configurações.';
+    }
+  }
+
+  window.mpSaveSettings = async function () {
+    const body = {
+      enabled: document.getElementById('mp-enabled').value === 'true',
+      environment: document.getElementById('mp-environment').value,
+      publicKey: document.getElementById('mp-public-key').value.trim(),
+      accessToken: document.getElementById('mp-access-token').value.trim(),
+      webhookSecret: document.getElementById('mp-webhook-secret').value.trim()
+    };
+    try {
+      const res = await adminFetch('/api/admin/settings/mercadopago', {
+        method: 'POST', body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erro ao salvar.');
+      document.getElementById('mp-cfg-msg').innerHTML = '<p class="form-msg success">Configurações salvas.</p>';
+      await mpLoadSettings();
+    } catch (e) {
+      document.getElementById('mp-cfg-msg').innerHTML = `<p class="form-msg error">${e.message}</p>`;
+    }
+  };
+
+  window.mpTestSettings = async function () {
+    try {
+      const res = await adminFetch('/api/admin/settings/mercadopago/test', { method: 'POST', body: '{}' });
+      const data = await res.json();
+      document.getElementById('mp-cfg-msg').innerHTML =
+        `<p class="form-msg ${data.status === 'connected' ? 'success' : 'error'}">${data.message}</p>`;
+      await mpLoadSettings();
+    } catch {
+      document.getElementById('mp-cfg-msg').innerHTML = '<p class="form-msg error">Erro ao testar a conexão.</p>';
+    }
+  };
+
+  document.addEventListener('click', e => {
+    const tab = e.target.closest('.admin-tab');
+    if (tab && tab.dataset.atab === 'pagamento') setTimeout(mpLoadSettings, 0);
+  });
+
+  // Init
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadMenu();
+    updateCartUI();
+    setTimeout(() => document.getElementById('loading-screen').classList.add('hidden'), 600);
+    if (adminToken) openAdminPanel();
+  });
+})();
+  </script>
+</body>
+</html>
