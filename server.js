@@ -1,6 +1,10 @@
 require('dotenv').config();
 const express=require('express'),cors=require('cors'),crypto=require('crypto'),bcrypt=require('bcryptjs'),jwt=require('jsonwebtoken');
-const menu=require('./menu'),db=require('./db'),enc=require('./lib/crypto'),settings=require('./lib/settings'),mp=require('./lib/mercadopago');
+const menu=require('./menu'),
+db=require('./db'),
+enc=require('./crypto'),
+settings=require('./settings'),
+mp=require('./mercadopago');
 const app=express();app.use(cors());app.use(express.json({limit:'1mb'}));app.use(express.static('public'));
 const PORT=process.env.PORT||3000,APP_URL=(process.env.APP_URL||`http://localhost:${PORT}`).replace(/\/$/,''),BACKEND_URL=(process.env.BACKEND_URL||APP_URL).replace(/\/$/,'');
 function env(n){if(!process.env[n])throw new Error(`${n} não configurada`);return process.env[n]}
