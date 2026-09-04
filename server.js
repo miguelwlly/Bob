@@ -17,7 +17,24 @@ function nextNumber(){const y=new Date().getFullYear(),n=db.readOrders().filter(
 app.post('/api/orders',async(req,res)=>{try{const p=req.body||{},c=db.readConfig(),ps=db.readPaymentSettings();if(p.idempotencyKey){const old=db.findOrderByIdempotencyKey(p.idempotencyKey);if(old)return res.json({orderId:old.id,orderNumber:old.orderNumber,checkoutUrl:old.checkoutUrl})}const calc=calcOrder(p,c);if(calc.errors)return res.status(400).json({error:calc.errors.join(' ')});if(!ps.enabled||!ps.accessTokenEncrypted)return res.status(503).json({error:'Mercado Pago ainda não está configurado no painel administrativo.'});const o={id:crypto.randomUUID(),orderNumber:nextNumber(),externalReference:'',createdAt:new Date().toISOString(),customerName:p.customer.name,phone:p.customer.phone,deliveryType:p.deliveryType,address:p.deliveryType==='entrega'?p.address:null,...calc,paymentStatus:'PENDING',orderStatus:'RECEBIDO',paymentProvider:'mercadopago',paymentId:null,checkoutUrl:null,idempotencyKey:p.idempotencyKey||null};o.externalReference=o.orderNumber;const webhook=/^https:\/\//i.test(BACKEND_URL)?`${BACKEND_URL}/api/payments/webhook`:null;const pref=await mp.createPreference(o,enc.decrypt(ps.accessTokenEncrypted),{success:`${APP_URL}/sucesso.html?order=${encodeURIComponent(o.id)}`,pending:`${APP_URL}/pendente.html?order=${encodeURIComponent(o.id)}`,failure:`${APP_URL}/falha.html?order=${encodeURIComponent(o.id)}`,webhook});o.checkoutUrl=ps.environment==='production'?(pref.init_point||null):(pref.sandbox_init_point||pref.init_point||null);if(!o.checkoutUrl)throw Error('Checkout URL ausente');db.saveOrder(o);res.json({orderId:o.id,orderNumber:o.orderNumber,checkoutUrl:o.checkoutUrl})}catch(e){console.error(e);res.status(502).json({error:'Não foi possível iniciar o pagamento agora.'})}});
 app.get('/api/orders/:id/status',(req,res)=>{const o=db.findOrderById(req.params.id);if(!o)return res.status(404).json({error:'Pedido não encontrado.'});res.json({orderId:o.id,orderNumber:o.orderNumber,total:o.total,paymentStatus:o.paymentStatus,orderStatus:o.orderStatus,deliveryType:o.deliveryType})});
 function validWebhook(req){const secret=settings.getWebhookSecret();if(!secret)return true;const sig=req.headers['x-signature'],rid=req.headers['x-request-id'],id=req.query['data.id']||req.body?.data?.id||'';if(!sig||!rid||!id)return false;let ts='',v1='';for(const p of String(sig).split(',')){const [k,...r]=p.trim().split('=');if(k==='ts')ts=r.join('=');if(k==='v1')v1=r.join('=')}if(!ts||!v1)return false;const m=`id:${id};request-id:${rid};ts:${ts};`,h=crypto.createHmac('sha256',secret).update(m).digest('hex');if(h.length!==v1.length)return false;return crypto.timingSafeEqual(Buffer.from(h),Buffer.from(v1))}
-app.post('/api/payments/webhook',async(req,res)=>{try{if(!validWebhook(req))return res.sendStatus(401);const topic=req.query.type||req.query.topic||req.body?.type,id=req.query['data.id']||req.body?.data?.id||req.query.id;if(topic&&topic!=='payment'||!id)return res.sendStatus(200);const token=settings.getAccessToken();if(!token)return res.sendStatus(200);const pay=await mp.getPayment(id,token),ref=pay.external_reference;if(!ref)return res.sendStatus(200);const o=db.findOrderByExternalReference(ref);if(!o)return res.sendStatus(200);db.updateOrder(o.id,{paymentStatus:mp.mapPaymentStatus(pay.status),paymentId:String(pay.id)});res.sendStatus(200)}catch(e){console.error('Webhook',e);res.sendStatus(500)}});
+app.post('/api/payments/webhook',async(req,res)=>{try{if(!validWebhook(req))return res.sendStatus(401);const topic=req.query.type||req.query.topic||req.body?.type,id=req.query['data.id']||req.body?.data?.id||req.query.id;if(topic&&topic!=='payment'||!id)return res.sendStatus(200);const token=settings.getAccessToken();if(!token)return res.sendStatus(200);const pay=await mp.getPayment(id,token),ref=pay.external_reference;if(!ref)return res.sendStatus(200);const o=db.findOrderByExternalReference(ref);if(!o)return res.sendStatus(200); if(pay.status==='approved'){
+  const valorPago=Number(pay.transaction_amount);
+  const valorPedido=Number(o.total);
+
+  if(pay.currency_id!=='BRL'||valorPago!==valorPedido){
+    return res.sendStatus(200);
+  }
+
+  db.updateOrder(o.id,{
+    paymentStatus:'APPROVED',
+    paymentId:String(pay.id)
+  });
+}else{
+  db.updateOrder(o.id,{
+    paymentStatus:mp.mapPaymentStatus(pay.status),
+    paymentId:String(pay.id)
+  });
+}res.sendStatus(200)}catch(e){console.error('Webhook',e);res.sendStatus(500)}});
 app.get('/api/admin/orders',adminAuth,(q,s)=>s.json({orders:db.readOrders().slice().sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))}));
 app.patch('/api/admin/orders/:id',adminAuth,(req,res)=>{const allowed=['RECEBIDO','EM PREPARAÇÃO','PRONTO','SAIU PARA ENTREGA','FINALIZADO','CANCELADO'];if(!allowed.includes(req.body?.orderStatus))return res.status(400).json({error:'Status inválido.'});const o=db.updateOrder(req.params.id,{orderStatus:req.body.orderStatus});if(!o)return res.status(404).json({error:'Pedido não encontrado.'});res.json({order:o})});
 app.get('/api/admin/config',adminAuth,(q,s)=>s.json(db.readConfig()));
