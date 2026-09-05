@@ -1,359 +1,90 @@
-require('dotenv').config();
-const express = require('express'),
-  cors = require('cors'),
-  crypto = require('crypto'),
-  bcrypt = require('bcryptjs'),
-  jwt = require('jsonwebtoken');
-const menu = require('./menu'),
-  db = require('./db'),
-  enc = require('./crypto'),
-  settings = require('./configurações'),
-  mp = require('./mercadopago');
-const { createPixPayment } = require('./mercadopago'); // ⬅️ NOVA FUNÇÃO PIX
-
-const app = express();
-app.use(cors());
-app.use(express.json({ limit: '1mb' }));
-app.use(express.static('public'));
-
-const PORT = process.env.PORT || 3000,
-  APP_URL = (process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, ''),
-  BACKEND_URL = (process.env.BACKEND_URL || APP_URL).replace(/\/$/, '');
-
-function env(n) {
-  if (!process.env[n]) throw new Error(`${n} não configurada`);
-  return process.env[n]
-}
-
-function adminAuth(req, res, next) {
-  const h = req.headers.authorization || '',
-    t = h.startsWith('Bearer ') ? h.slice(7) : null;
-  if (!t) return res.status(401).json({ error: 'Não autorizado.' });
-  try {
-    const p = jwt.verify(t, env('ADMIN_JWT_SECRET'));
-    if (p.role !== 'admin') throw 0;
-    next()
-  } catch { return res.status(401).json({ error: 'Sessão expirada ou inválida.' }) }
-}
-
-app.get('/api/health', (q, s) => s.json({ ok: true }));
-
-app.get('/api/menu', (q, s) => {
-  const c = db.readConfig(),
-    p = db.readPaymentSettings();
-  s.json({
-    products: menu.products,
-    additionals: menu.additionals,
-    config: {
-      deliveryFee: c.deliveryFee,
-      schedule: c.schedule,
-      address: c.address,
-      storeName: 'Bob Burguer',
-      allowedCity: c.allowedCity,
-      allowedUf: c.allowedUf
-    },
-    mercadopago: {
-      enabled: !!p.enabled,
-      publicKey: p.enabled ? p.publicKey : null
-    }
-  })
-});
-
-app.post('/api/admin/login', (req, res) => {
-  try {
-    if (String(req.body?.username || '') !== env('ADMIN_USERNAME') || !bcrypt.compareSync(String(req.body?.password || ''), env('ADMIN_PASSWORD_HASH')))
-      return res.status(401).json({ error: 'Usuário ou senha incorretos.' });
-    res.json({ token: jwt.sign({ role: 'admin' }, env('ADMIN_JWT_SECRET'), { expiresIn: '12h' }) })
-  } catch (e) {
-    res.status(500).json({ error: 'Admin não configurado corretamente.' })
-  }
-});
-
-function calcOrder(p, c) {
-  const e = [];
-  if (!Array.isArray(p.items) || !p.items.length) e.push('Carrinho vazio.');
-  if (!['entrega', 'retirada'].includes(p.deliveryType)) e.push('Tipo de entrega inválido.');
-  if (!p.customer?.name || !p.customer?.phone) e.push('Dados do cliente incompletos.');
-  if (p.deliveryType === 'entrega') {
-    const a = p.address;
-    if (!a?.street || !a?.number || !a?.neighborhood || !a?.cep) e.push('Endereço incompleto.');
-    if (a && (a.city || '').toLowerCase() !== (c.allowedCity || 'Breu Branco').toLowerCase())
-      e.push(`Só entregamos em ${c.allowedCity || 'Breu Branco'} - ${c.allowedUf || 'PA'}.`)
-  }
-  if (e.length) return { errors: e };
-  const items = [];
-  for (const r of p.items) {
-    const x = menu.products.find(z => z.id === r.productId);
-    if (!x) { e.push(`Produto inválido: ${r.productId}`); continue }
-    const q = Math.max(1, Math.min(99, parseInt(r.quantity, 10) || 1)),
-      adds = [];
-    if (x.allowsAdditionals && Array.isArray(r.additionalIds))
-      for (const id of r.additionalIds) {
-        const a = [...menu.additionals.lunch, ...menu.additionals.sides].find(z => z.id === id && z.active);
-        if (a) adds.push({ id: a.id, name: a.name, price: Number(a.price) })
-      }
-    items.push({ productId: x.id, productName: x.name, unitPrice: Number(x.price), quantity: q, additionals: adds })
-  }
-  if (e.length) return { errors: e };
-  const sub = items.reduce((s, i) => s + (i.unitPrice + i.additionals.reduce((a, x) => a + x.price, 0)) * i.quantity, 0),
-    fee = p.deliveryType === 'entrega' ? Number(c.deliveryFee || 0) : 0;
-  return { items, subtotal: Number(sub.toFixed(2)), deliveryFee: Number(fee.toFixed(2)), total: Number((sub + fee).toFixed(2)) }
-}
-
-function nextNumber() {
-  const y = new Date().getFullYear();
-  const n = db.readOrders()
-    .filter(o => o.orderNumber?.startsWith(`BOB-${y}-`)).length + 1;
-
-  return `BOB-${y}-${String(n).padStart(6, '0')}`;
-}
-
-app.post('/api/orders', async (req, res) => {
-  try {
-    const p = req.body || {},
-      c = db.readConfig(),
-      ps = db.readPaymentSettings();
-
-    if (p.idempotencyKey) {
-      const old = db.findOrderByIdempotencyKey(p.idempotencyKey);
-      if (old) return res.json({
-        orderId: old.id,
-        orderNumber: old.orderNumber,
-        checkoutUrl: old.checkoutUrl
-      });
-    }
-
-    const calc = calcOrder(p, c);
-    if (calc.errors)
-      return res.status(400).json({ error: calc.errors.join(' ') });
-
-    if (!ps.enabled || !ps.accessTokenEncrypted)
-      return res.status(503).json({
-        error: 'Mercado Pago ainda não está configurado no painel administrativo.'
-      });
-
-    const o = {
-      id: crypto.randomUUID(),
-      orderNumber: nextNumber(),
-      externalReference: '',
-      createdAt: new Date().toISOString(),
-      customerName: p.customer.name,
-      phone: p.customer.phone,
-      deliveryType: p.deliveryType,
-      address: p.deliveryType === 'entrega' ? p.address : null,
-      ...calc,
-      paymentStatus: 'PENDING',
-      orderStatus: 'RECEBIDO',
-      paymentProvider: 'mercadopago',
-      paymentId: null,
-      checkoutUrl: null,
-      idempotencyKey: p.idempotencyKey || null
-    };
-
-    o.externalReference = o.orderNumber;
-
-    const webhook = /^https:\/\//i.test(BACKEND_URL) ?
-      `${BACKEND_URL}/api/payments/webhook` :
-      null;
-
-    const pref = await mp.createPreference(
-      o,
-      enc.decrypt(ps.accessTokenEncrypted), {
-        success: `${APP_URL}/sucesso.html?order=${encodeURIComponent(o.id)}`,
-        pending: `${APP_URL}/pendente.html?order=${encodeURIComponent(o.id)}`,
-        failure: `${APP_URL}/falha.html?order=${encodeURIComponent(o.id)}`,
-        webhook
-      }
-    );
-
-    o.checkoutUrl = ps.environment === 'production' ?
-      (pref.init_point || null) :
-      (pref.sandbox_init_point || pref.init_point || null);
-
-    if (!o.checkoutUrl) throw Error('Checkout URL ausente');
-
-    db.saveOrder(o);
-
-    res.json({
-      orderId: o.id,
-      orderNumber: o.orderNumber,
-      checkoutUrl: o.checkoutUrl
-    });
-
-  } catch (e) {
-    console.error('ERRO MERCADO PAGO:', e.response?.data || e.message || e);
-    res.status(502).json({
-      error: e.response?.data?.message || e.message || 'Não foi possível iniciar o pagamento agora.'
-    });
-  }
-});
-
-function validWebhook(req) {
-  const secret = settings.getWebhookSecret();
-  if (!secret) return true;
-  const sig = req.headers['x-signature'],
-    rid = req.headers['x-request-id'],
-    id = req.query['data.id'] || req.body?.data?.id || '';
-  if (!sig || !rid || !id) return false;
-  let ts = '',
-    v1 = '';
-  for (const p of String(sig).split(',')) {
-    const [k, ...r] = p.trim().split('=');
-    if (k === 'ts') ts = r.join('=');
-    if (k === 'v1') v1 = r.join('=')
-  }
-  if (!ts || !v1) return false;
-  const m = `id:${id};request-id:${rid};ts:${ts};`,
-    h = crypto.createHmac('sha256', secret).update(m).digest('hex');
-  if (h.length !== v1.length) return false;
-  return crypto.timingSafeEqual(Buffer.from(h), Buffer.from(v1))
-}
-
-app.post('/api/payments/webhook', async (req, res) => {
-  try {
-    if (!validWebhook(req)) return res.sendStatus(401);
-    const topic = req.query.type || req.query.topic || req.body?.type,
-      id = req.query['data.id'] || req.body?.data?.id || req.query.id;
-    if (topic && topic !== 'payment' || !id) return res.sendStatus(200);
-    const token = settings.getAccessToken();
-    if (!token) return res.sendStatus(200);
-    const pay = await mp.getPayment(id, token),
-      ref = pay.external_reference;
-    if (!ref) return res.sendStatus(200);
-    const o = db.findOrderByExternalReference(ref);
-    if (!o) return res.sendStatus(200);
-    if (pay.status === 'approved') {
-      const valorPago = Number(pay.transaction_amount);
-      const valorPedido = Number(o.total);
-
-      if (pay.currency_id !== 'BRL' || valorPago !== valorPedido) {
-        return res.sendStatus(200);
-      }
-
-      db.updateOrder(o.id, {
-        paymentStatus: 'APPROVED',
-        paymentId: String(pay.id)
-      });
-    } else {
-      db.updateOrder(o.id, {
-        paymentStatus: mp.mapPaymentStatus(pay.status),
-        paymentId: String(pay.id)
-      });
-    }
-    res.sendStatus(200)
-  } catch (e) {
-    console.error('Webhook', e);
-    res.sendStatus(500)
-  }
-});
-
-app.get('/api/admin/orders', adminAuth, (q, s) => s.json({ orders: db.readOrders().slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) }));
-
-app.patch('/api/admin/orders/:id', adminAuth, (req, res) => {
-  const allowed = ['RECEBIDO', 'EM PREPARAÇÃO', 'PRONTO', 'SAIU PARA ENTREGA', 'FINALIZADO', 'CANCELADO'];
-  if (!allowed.includes(req.body?.orderStatus))
-    return res.status(400).json({ error: 'Status inválido.' });
-  const o = db.updateOrder(req.params.id, { orderStatus: req.body.orderStatus });
-  if (!o) return res.status(404).json({ error: 'Pedido não encontrado.' });
-  res.json({ order: o })
-});
-
-app.get('/api/admin/config', adminAuth, (q, s) => s.json(db.readConfig()));
-
-app.put('/api/admin/config', adminAuth, (req, res) => {
-  const c = db.readConfig(),
-    n = { ...c, deliveryFee: Number(req.body?.deliveryFee ?? c.deliveryFee) || 0, whatsapp: String(req.body?.whatsapp ?? c.whatsapp), schedule: String(req.body?.schedule ?? c.schedule), address: String(req.body?.address ?? c.address) };
-  db.writeConfig(n);
-  res.json(n)
-});
-
-app.get('/api/admin/settings/mercadopago', adminAuth, (q, s) => s.json(settings.publicSettings()));
-
-app.post('/api/admin/settings/mercadopago', adminAuth, async (req, res) => {
-  try {
-    const c = db.readPaymentSettings(),
-      b = req.body || {},
-      n = { ...c, enabled: !!b.enabled, environment: b.environment === 'production' ? 'production' : 'test', publicKey: typeof b.publicKey === 'string' ? b.publicKey.trim() : (c.publicKey || '') };
-    if (typeof b.accessToken === 'string' && b.accessToken.trim()) {
-      const t = b.accessToken.trim(),
-        test = await mp.testConnection(t);
-      if (!test.ok) return res.status(400).json({ error: 'Access Token inválido ou não aceito pela API.' });
-      n.accessTokenEncrypted = enc.encrypt(t);
-      n.accessTokenLast4 = enc.last4(t);
-      n.lastTestStatus = 'connected';
-      n.lastTestAt = new Date().toISOString()
-    }
-    if (typeof b.webhookSecret === 'string' && b.webhookSecret.trim()) {
-      n.webhookSecretEncrypted = enc.encrypt(b.webhookSecret.trim());
-      n.webhookSecretLast4 = enc.last4(b.webhookSecret.trim())
-    }
-    if (n.enabled && !n.accessTokenEncrypted)
-      return res.status(400).json({ error: 'Informe um Access Token antes de ativar o Mercado Pago.' });
-    db.writePaymentSettings(n);
-    res.json(settings.publicSettings())
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Erro ao salvar configurações do Mercado Pago.' })
-  }
-});
-
-app.post('/api/admin/settings/mercadopago/test', adminAuth, async (req, res) => {
-  try {
-    const t = settings.getAccessToken();
-    if (!t) return res.json({ status: 'incomplete', message: 'Nenhum Access Token configurado.' });
-    const r = await mp.testConnection(t),
-      st = r.ok ? 'connected' : r.reason === 'invalid' ? 'invalid' : 'error';
-    const c = db.readPaymentSettings();
-    db.writePaymentSettings({ ...c, lastTestStatus: st, lastTestAt: new Date().toISOString() });
-    res.json({ status: st, message: st === 'connected' ? 'Conexão funcionando.' : st === 'invalid' ? 'Credencial inválida.' : 'Erro ao conectar com o Mercado Pago.' })
-  } catch { res.status(500).json({ status: 'error', message: 'Erro ao testar a conexão.' }) }
-});
-
 // =============================================
-// ⬇️⬇️⬇️ ROTA PARA PIX (QR CODE) ⬇️⬇️⬇️
+// 🔒 CONFIGURAÇÕES COMPLETAS DA LOJA (BACKEND)
 // =============================================
 
-app.post('/api/create-pix', async (req, res) => {
-  try {
-    const { order, email } = req.body;
-
-    if (!email) {
-      return res.status(400).json({ error: 'Email do cliente é obrigatório para Pix' });
-    }
-
-    // Pega o token das configurações salvas no banco
-    const ps = db.readPaymentSettings();
-    if (!ps.enabled || !ps.accessTokenEncrypted) {
-      return res.status(503).json({ error: 'Mercado Pago não configurado.' });
-    }
-
-    const accessToken = enc.decrypt(ps.accessTokenEncrypted);
-    const result = await createPixPayment(order, accessToken, email);
-
-    const qrData = result.body.point_of_interaction?.transaction_data;
-
-    if (!qrData) {
-      return res.status(500).json({ error: 'Não foi possível gerar o QR Code' });
-    }
-
-    res.json({
-      qr_code_base64: qrData.qr_code_base64string,
-      qr_code_text: qrData.qr_code,
-      payment_id: result.body.id,
-      status: result.body.status
-    });
-
-  } catch (error) {
-    console.error('Erro ao gerar Pix:', error);
-    res.status(500).json({
-      error: error.message,
-      details: error.cause || 'Verifique os logs'
-    });
-  }
-});
+// 🔑 SENHA DO ADMIN
+const ADMIN_PASSWORD = 'burgerbob2727@';
 
 // =============================================
-// ⬆️⬆️⬆️ FIM DA ROTA PIX ⬆️⬆️⬆️
+// 🍔 CARDÁPIO COMPLETO
 // =============================================
+const PRODUCTS = [
+  // LANCHES
+  { id: 'x-tudo', name: 'X-Tudo', desc: 'Carne Caseira, Queijo, Ovo, Presunto, Salsicha, Calabresa, Bacon, Alface, Tomate.', cat: 'lanches', price: 35, adds: true },
+  { id: 'x-bacon', name: 'X-Bacon', desc: 'Carne Caseira, Queijo, Presunto, Bacon, Alface, Tomate.', cat: 'lanches', price: 32, adds: true },
+  { id: 'x-brazil', name: 'X-Brazil Agridoce', desc: 'Carne Caseira, Queijo, Presunto, Bacon, Abacaxi, Alface, Tomate.', cat: 'lanches', price: 25, adds: true },
+  { id: 'x-banana', name: 'X-Banana', desc: 'Carne Caseira, Queijo, Presunto, Banana, Alface, Tomate.', cat: 'lanches', price: 23, adds: true },
+  { id: 'x-calabresa', name: 'X-Calabresa', desc: 'Carne Caseira, Queijo, Presunto, Calabresa, Alface, Tomate.', cat: 'lanches', price: 22, adds: true },
+  { id: 'x-salada', name: 'X-Salada', desc: 'Carne Caseira, Queijo, Presunto, Salada, Alface, Tomate.', cat: 'lanches', price: 22, adds: true },
+  { id: 'franguito', name: 'Franguito Individual', desc: 'Carne Caseira, Queijo, Presunto, Salada, Alface, Tomate.', cat: 'lanches', price: 45, adds: true },
 
-app.listen(PORT, () => console.log(`Bob Burguer rodando em http://localhost:${PORT}`));
+  // BALDES
+  { id: 'balde-650', name: 'Balde de 650g', desc: 'Franguinho Frito no Balde', cat: 'baldes', price: 55, adds: false },
+  { id: 'balde-630', name: 'Balde de 630g', desc: 'Franguinho Frito no Balde', cat: 'baldes', price: 65, adds: false },
+  { id: 'balde-600', name: 'Balde de 600g', desc: 'Franguinho Frito no Balde', cat: 'baldes', price: 75, adds: false },
+  { id: 'balde-500', name: 'Balde de 500g', desc: 'Franguinho Frito no Balde', cat: 'baldes', price: 95, adds: false },
+
+  // CARNES
+  { id: 'carne-300', name: 'Carne na Chapa - 300g', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 40, adds: false },
+  { id: 'carne-450', name: 'Carne na Chapa - 450g', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 50, adds: false },
+  { id: 'carne-600', name: 'Carne na Chapa - 600g', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 60, adds: false },
+  { id: 'carne-800', name: 'Carne na Chapa - 800g', desc: 'Baião, Batata Frita, Salada, Farofa', cat: 'petiscos', price: 95, adds: false },
+  { id: 'picanha-250', name: 'Picanha na Chapa - 250g', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 35, adds: false },
+  { id: 'picanha-500', name: 'Picanha na Chapa - 500g', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 75, adds: false },
+  { id: 'picanha-800', name: 'Picanha na Chapa - 800g', desc: 'Baião, Batata Frita, Salada, Farofa', cat: 'petiscos', price: 95, adds: false },
+  { id: 'picanha-1000', name: 'Picanha na Chapa - 1kg', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 115, adds: false },
+  { id: 'picanha-1200', name: 'Picanha na Chapa - 1.2kg', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 135, adds: false },
+  { id: 'file-200', name: 'Filé de Peixe - 200g', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 30, adds: false },
+  { id: 'file-500', name: 'Filé de Peixe - 500g', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 60, adds: false },
+  { id: 'batata-300', name: 'Batata Frita - 300g', desc: 'Porção de Batata Frita', cat: 'petiscos', price: 20, adds: false },
+  { id: 'batata-600', name: 'Batata Frita - 600g', desc: 'Porção de Batata Frita', cat: 'petiscos', price: 40, adds: false },
+
+  // COMBOS
+  { id: 'combo-1', name: 'Combo 1', desc: 'Balde de frango 650g individual, 2 X-Burger, Batata 300g, Molho, Refrigerante 1L', cat: 'combos', price: 115, adds: false },
+  { id: 'combo-2', name: 'Combo 2', desc: 'Balde de frango 1kg individual, 2 X-Bacon, Refrigerante 2L', cat: 'combos', price: 170, adds: false },
+  { id: 'combo-3', name: 'Combo 3', desc: 'Balde de frango 2kg individual, 1 X-Tudo, 1 X-Calabresa, Molho, Batata 600g, Refrigerante 2L', cat: 'combos', price: 235, adds: false },
+  { id: 'combo-petisco', name: 'Combo Petisco', desc: 'Carne na chapa 300g, Batata 300g, Molho, Refrigerante 1L', cat: 'combos', price: 56, adds: false },
+
+  // BEBIDAS
+  { id: 'coca-2l', name: 'Coca Cola 2L', desc: 'Refrigerante Coca-Cola 2 Litros', cat: 'bebidas', price: 12, adds: false },
+  { id: 'coca-1l', name: 'Coca Cola 1L', desc: 'Refrigerante Coca-Cola 1 Litro', cat: 'bebidas', price: 10, adds: false },
+  { id: 'coca-lata', name: 'Coca Lata', desc: 'Refrigerante Coca-Cola Lata 350ml', cat: 'bebidas', price: 8, adds: false },
+  { id: 'guarana-2l', name: 'Guaraná 2L', desc: 'Refrigerante Guaraná 2 Litros', cat: 'bebidas', price: 16, adds: false },
+  { id: 'guarana-1l', name: 'Guaraná 1L', desc: 'Refrigerante Guaraná 1 Litro', cat: 'bebidas', price: 14, adds: false },
+  { id: 'guarana-lata', name: 'Guaraná Lata', desc: 'Refrigerante Guaraná Lata 350ml', cat: 'bebidas', price: 8, adds: false },
+  { id: 'agua', name: 'Água Mineral', desc: 'Água Mineral 500ml', cat: 'bebidas', price: 5, adds: false },
+
+  // SUCOS
+  { id: 'suco-caju', name: 'Suco de Cajá', desc: 'Suco Natural de Cajá', cat: 'sucos', price: 7, adds: false },
+  { id: 'suco-goiaba', name: 'Suco de Goiaba', desc: 'Suco Natural de Goiaba', cat: 'sucos', price: 7, adds: false },
+  { id: 'suco-acerola', name: 'Suco de Acerola', desc: 'Suco Natural de Acerola', cat: 'sucos', price: 7, adds: false },
+  { id: 'suco-hibisco', name: 'Suco de Hibisco', desc: 'Suco Natural de Hibisco', cat: 'sucos', price: 7, adds: false },
+  { id: 'suco-cupuacu', name: 'Suco de Cupuaçu', desc: 'Suco Natural de Cupuaçu', cat: 'sucos', price: 7, adds: false },
+  { id: 'suco-maracuja', name: 'Suco de Maracujá', desc: 'Suco Natural de Maracujá', cat: 'sucos', price: 7, adds: false },
+  { id: 'jarra-suco', name: 'Jarra de Suco', desc: 'Jarra de Suco Natural', cat: 'sucos', price: 25, adds: false }
+];
+
+// =============================================
+// 🧀 ADICIONAIS
+// =============================================
+const ADDITIONALS = [
+  { id: 'add-queijo', name: 'Queijo', price: 10 },
+  { id: 'add-ovo', name: 'Ovo', price: 2 },
+  { id: 'add-bacon', name: 'Bacon', price: 2 },
+  { id: 'add-banana', name: 'Banana', price: 2 },
+  { id: 'add-salsicha', name: 'Salsicha', price: 2 },
+  { id: 'add-presunto', name: 'Presunto', price: 2 },
+  { id: 'add-hamburger', name: 'Hamburger Caseiro', price: 5 }
+];
+
+// =============================================
+// 💰 CONFIGURAÇÕES DA LOJA
+// =============================================
+const STORE_CONFIG = {
+  deliveryFee: 5,
+  whatsapp: '(94) 99167-0523',
+  horario: 'Seg–Dom: 18h às 23h',
+  endereco: 'Av. Getúlio Vargas - Centro, Breu Branco - PA'
+};
+
+// =
