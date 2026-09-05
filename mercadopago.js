@@ -1,4 +1,3 @@
-
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 
 function clientFor(accessToken) {
@@ -91,9 +90,53 @@ function mapPaymentStatus(status) {
   })[status] || 'PENDING';
 }
 
+// =============================================
+// ⬇️⬇️⬇️ NOVA FUNÇÃO PARA PIX (QR CODE) ⬇️⬇️⬇️
+// =============================================
+
+async function createPixPayment(order, token, emailCliente) {
+  const payment = new Payment(clientFor(token));
+
+  // Calcula o valor total
+  let total = order.items.reduce((sum, item) => {
+    const itemTotal = item.quantity * (item.unitPrice + (item.additionals || []).reduce((s, a) => s + a.price, 0));
+    return sum + itemTotal;
+  }, 0);
+  total += order.deliveryFee || 0;
+  total = Number(total.toFixed(2));
+
+  const body = {
+    transaction_amount: total,
+    description: `Pedido ${order.externalReference || 'Bob Burguer'}`,
+    payment_method_id: 'pix',
+    payer: {
+      email: emailCliente,
+      first_name: order.customerName || 'Cliente',
+      phone: {
+        number: String(order.phone || '').replace(/\D/g, '')
+      }
+    },
+    external_reference: order.externalReference,
+    notification_url: order.webhookUrl || undefined
+  };
+
+  try {
+    const response = await payment.create({ body });
+    return response;
+  } catch (error) {
+    console.error('Erro ao criar Pix:', error);
+    throw error;
+  }
+}
+
+// =============================================
+// ⬆️⬆️⬆️ FIM DA FUNÇÃO PIX ⬆️⬆️⬆️
+// =============================================
+
 module.exports = {
   createPreference,
   getPayment,
   testConnection,
-  mapPaymentStatus
+  mapPaymentStatus,
+  createPixPayment   // ⬅️ ADICIONADA AQUI
 };
