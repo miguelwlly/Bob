@@ -50,9 +50,16 @@ async function createPreference(order, token, urls) {
       failure: urls.failure
     },
     auto_return: 'approved',
-    statement_descriptor: 'BOB BURGUER'
-  };
-
+    statement_descriptor: 'BOB BURGUER',
+  payment_methods: {
+  excluded_payment_types: [
+    { id: 'credit_card' },
+    { id: 'debit_card' },
+    { id: 'prepaid_card' },
+    { id: 'ticket' }
+  ]
+}
+};
   if (urls.webhook) {
     body.notification_url = urls.webhook;
   }
