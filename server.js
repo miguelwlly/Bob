@@ -13,8 +13,14 @@ app.get('/api/health',(q,s)=>s.json({ok:true}));
 app.get('/api/menu',(q,s)=>{const c=db.readConfig(),p=db.readPaymentSettings();s.json({products:menu.products,additionals:menu.additionals,config:{deliveryFee:c.deliveryFee,schedule:c.schedule,address:c.address,storeName:'Bob Burguer',allowedCity:c.allowedCity,allowedUf:c.allowedUf},mercadopago:{enabled:!!p.enabled,publicKey:p.enabled?p.publicKey:null}})});
 app.post('/api/admin/login',(req,res)=>{try{if(String(req.body?.username||'')!==env('ADMIN_USERNAME')||!bcrypt.compareSync(String(req.body?.password||''),env('ADMIN_PASSWORD_HASH')))return res.status(401).json({error:'Usuário ou senha incorretos.'});res.json({token:jwt.sign({role:'admin'},env('ADMIN_JWT_SECRET'),{expiresIn:'12h'})})}catch(e){res.status(500).json({error:'Admin não configurado corretamente.'})}});
 function calcOrder(p,c){const e=[];if(!Array.isArray(p.items)||!p.items.length)e.push('Carrinho vazio.');if(!['entrega','retirada'].includes(p.deliveryType))e.push('Tipo de entrega inválido.');if(!p.customer?.name||!p.customer?.phone)e.push('Dados do cliente incompletos.');if(p.deliveryType==='entrega'){const a=p.address;if(!a?.street||!a?.number||!a?.neighborhood||!a?.cep)e.push('Endereço incompleto.');if(a&&(a.city||'').toLowerCase()!==(c.allowedCity||'Breu Branco').toLowerCase())e.push(`Só entregamos em ${c.allowedCity||'Breu Branco'} - ${c.allowedUf||'PA'}.`)}if(e.length)return{errors:e};const items=[];for(const r of p.items){const x=menu.products.find(z=>z.id===r.productId);if(!x){e.push(`Produto inválido: ${r.productId}`);continue}const q=Math.max(1,Math.min(99,parseInt(r.quantity,10)||1)),adds=[];if(x.allowsAdditionals&&Array.isArray(r.additionalIds))for(const id of r.additionalIds){const a=[...menu.additionals.lunch,...menu.additionals.sides].find(z=>z.id===id&&z.active);if(a)adds.push({id:a.id,name:a.name,price:Number(a.price)})}items.push({productId:x.id,productName:x.name,unitPrice:Number(x.price),quantity:q,additionals:adds})}if(e.length)return{errors:e};const sub=items.reduce((s,i)=>s+(i.unitPrice+i.additionals.reduce((a,x)=>a+x.price,0))*i.quantity,0),fee=p.deliveryType==='entrega'?Number(c.deliveryFee||0):0;return{items,subtotal:Number(sub.toFixed(2)),deliveryFee:Number(fee.toFixed(2)),total:Number((sub+fee).toFixed(2))}}
-function nextNumber(){const y=new Date().getFullYear(),n=db.readOrders().filter(o=>o.orderNumber?.startsWith(`BOB-${y}-`)).length+1;return`BOB-${y}-${String(n).padStart(6,'0')
-app.
+function nextNumber() {
+  const y = new Date().getFullYear();
+  const n = db.readOrders()
+    .filter(o => o.orderNumber?.startsWith(`BOB-${y}-`)).length + 1;
+
+  return `BOB-${y}-${String(n).padStart(6, '0')}`;
+}
+
 app.post('/api/orders', async (req, res) => {
   try {
     const p = req.body || {},
