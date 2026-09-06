@@ -1,0 +1,104 @@
+// =============================================
+// CONFIGURAÇÕES DO MERCADO PAGO
+// =============================================
+
+// **********
+// CONFIGURAÇÕES DA LOJA
+// **********
+
+// SENHA DO ADMIN
+const ADMIN_PASSWORD = 'burgerbob2727@';
+
+// CARDÁPIO COMPLETO
+const PRODUCTS = [
+  // LANCHES
+  { id: 'x-tudo', name: 'X-Tudo', desc: 'Carne Caseira, Queijo, Ovo, Presunto, Salsicha, Calabresa, Bacon, Alface, Tomate.', cat: 'lanches', price: 35, adds: true },
+  { id: 'x-bacon', name: 'X-Bacon', desc: 'Carne Caseira, Queijo, Presunto, Bacon, Alface, Tomate.', cat: 'lanches', price: 32, adds: true },
+  { id: 'x-brazil', name: 'X-Brazil Agridoce', desc: 'Carne Caseira, Queijo, Presunto, Bacon, Abacaxi, Alface, Tomate.', cat: 'lanches', price: 25, adds: true },
+  { id: 'x-banana', name: 'X-Banana', desc: 'Carne Caseira, Queijo, Presunto, Banana, Alface, Tomate.', cat: 'lanches', price: 23, adds: true },
+  { id: 'x-calabresa', name: 'X-Calabresa', desc: 'Carne Caseira, Queijo, Presunto, Calabresa, Alface, Tomate.', cat: 'lanches', price: 22, adds: true },
+  { id: 'x-salada', name: 'X-Salada', desc: 'Carne Caseira, Queijo, Presunto, Salada, Alface, Tomate.', cat: 'lanches', price: 22, adds: true },
+  { id: 'franguito', name: 'Franguito Individual', desc: 'Carne Caseira, Queijo, Presunto, Salada, Alface, Tomate.', cat: 'lanches', price: 45, adds: true },
+  
+  // BALDES
+  { id: 'balde-650', name: 'Balde de 650g', desc: 'Franguinho Frito no Balde', cat: 'baldes', price: 55, adds: false },
+  { id: 'balde-630', name: 'Balde de 630g', desc: 'Franguinho Frito no Balde', cat: 'baldes', price: 65, adds: false },
+  { id: 'balde-600', name: 'Balde de 600g', desc: 'Franguinho Frito no Balde', cat: 'baldes', price: 75, adds: false },
+  { id: 'balde-500', name: 'Balde de 500g', desc: 'Franguinho Frito no Balde', cat: 'baldes', price: 95, adds: false },
+  
+  // CARNES
+  { id: 'carne-300', name: 'Carne na Chapa - 300g', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 40, adds: false },
+  { id: 'carne-450', name: 'Carne na Chapa - 450g', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 50, adds: false },
+  { id: 'carne-600', name: 'Carne na Chapa - 600g', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 60, adds: false },
+  { id: 'carne-800', name: 'Carne na Chapa - 800g', desc: 'Baião, Batata Frita, Salada, Farofa', cat: 'petiscos', price: 95, adds: false },
+  { id: 'picanha-250', name: 'Picanha na Chapa - 250g', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 35, adds: false },
+  { id: 'picanha-500', name: 'Picanha na Chapa - 500g', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 75, adds: false },
+  { id: 'picanha-800', name: 'Picanha na Chapa - 800g', desc: 'Baião, Batata Frita, Salada, Farofa', cat: 'petiscos', price: 95, adds: false },
+  { id: 'picanha-1000', name: 'Picanha na Chapa - 1kg', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 115, adds: false },
+  { id: 'picanha-1200', name: 'Picanha na Chapa - 1.2kg', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 135, adds: false },
+  { id: 'file-200', name: 'Filé de Peixe - 200g', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 30, adds: false },
+  { id: 'file-500', name: 'Filé de Peixe - 500g', desc: 'Baião, Macaxeira Frita, Salada, Farofa', cat: 'petiscos', price: 60, adds: false },
+  { id: 'batata-300', name: 'Batata Frita - 300g', desc: 'Porção de Batata Frita', cat: 'petiscos', price: 20, adds: false },
+  { id: 'batata-600', name: 'Batata Frita - 600g', desc: 'Porção de Batata Frita', cat: 'petiscos', price: 40, adds: false },
+  
+  // COMBOS
+  { id: 'combo-1', name: 'Combo 1', desc: 'Balde de frango 650g individual, 2 X-Burger, Batata 300g, Molho, Refrigerante 1L', cat: 'combos', price: 115, adds: false },
+  { id: 'combo-2', name: 'Combo 2', desc: 'Balde de frango 1kg individual, 2 X-Bacon, Refrigerante 2L', cat: 'combos', price: 170, adds: false },
+  { id: 'combo-3', name: 'Combo 3', desc: 'Balde de frango 2kg individual, 1 X-Tudo, 1 X-Calabresa, Molho, Batata 600g, Refrigerante 2L', cat: 'combos', price: 235, adds: false },
+  { id: 'combo-petisco', name: 'Combo Petisco', desc: 'Carne na chapa 300g, Batata 300g, Molho, Refrigerante 1L', cat: 'combos', price: 56, adds: false },
+  
+  // BEBIDAS
+  { id: 'coca-2l', name: 'Coca Cola 2L', desc: 'Refrigerante Coca-Cola 2 Litros', cat: 'bebidas', price: 12, adds: false },
+  { id: 'coca-1l', name: 'Coca Cola 1L', desc: 'Refrigerante Coca-Cola 1 Litro', cat: 'bebidas', price: 10, adds: false },
+  { id: 'coca-lata', name: 'Coca Lata', desc: 'Refrigerante Coca-Cola Lata 350ml', cat: 'bebidas', price: 8, adds: false },
+  { id: 'guarana-2l', name: 'Guaraná 2L', desc: 'Refrigerante Guaraná 2 Litros', cat: 'bebidas', price: 16, adds: false },
+  { id: 'guarana-1l', name: 'Guaraná 1L', desc: 'Refrigerante Guaraná 1 Litro', cat: 'bebidas', price: 14, adds: false },
+  { id: 'guarana-lata', name: 'Guaraná Lata', desc: 'Refrigerante Guaraná Lata 350ml', cat: 'bebidas', price: 8, adds: false },
+  { id: 'agua', name: 'Água Mineral', desc: 'Água Mineral 500ml', cat: 'bebidas', price: 5, adds: false },
+  
+  // SUCOS
+  { id: 'suco-caju', name: 'Suco de Cajá', desc: 'Suco Natural de Cajá', cat: 'sucos', price: 7, adds: false },
+  { id: 'suco-goiaba', name: 'Suco de Goiaba', desc: 'Suco Natural de Goiaba', cat: 'sucos', price: 7, adds: false },
+  { id: 'suco-acerola', name: 'Suco de Acerola', desc: 'Suco Natural de Acerola', cat: 'sucos', price: 7, adds: false },
+  { id: 'suco-hibisco', name: 'Suco de Hibisco', desc: 'Suco Natural de Hibisco', cat: 'sucos', price: 7, adds: false },
+  { id: 'suco-cupuacu', name: 'Suco de Cupuaçu', desc: 'Suco Natural de Cupuaçu', cat: 'sucos', price: 7, adds: false },
+  { id: 'suco-maracuja', name: 'Suco de Maracujá', desc: 'Suco Natural de Maracujá', cat: 'sucos', price: 7, adds: false },
+  { id: 'jarra-suco', name: 'Jarra de Suco', desc: 'Jarra de Suco Natural', cat: 'sucos', price: 25, adds: false }
+];
+
+// ADICIONAIS
+const ADDITIONALS = [
+  { id: 'add-queijo', name: 'Queijo', price: 10 },
+  { id: 'add-ovo', name: 'Ovo', price: 2 },
+  { id: 'add-bacon', name: 'Bacon', price: 2 },
+  { id: 'add-banana', name: 'Banana', price: 2 },
+  { id: 'add-salsicha', name: 'Salsicha', price: 2 },
+  { id: 'add-presunto', name: 'Presunto', price: 2 },
+  { id: 'add-hamburger', name: 'Hamburger Caseiro', price: 5 }
+];
+
+// CONFIGURAÇÕES DA LOJA
+const STORE_CONFIG = {
+  deliveryFee: 5,
+  whatsapp: '(94) 99167-0523',
+  horario: 'Seg–Dom: 18h às 23h',
+  endereco: 'Av. Getúlio Vargas - Centro, Breu Branco - PA'
+};
+
+// MERCADO PAGO - CREDENCIAIS
+// Coloque aqui suas credenciais de PRODUÇÃO
+const MERCADO_PAGO = {
+  publicKey: 'APP_USR-aaab0b32-efc5-4c0e-9255-202606000002',
+  accessToken: 'APP_USR-1135750321319115-090514-7h2026ah4h6002o6o6o6o6o62126'
+};
+
+// EXPORTAR TUDO
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    ADMIN_PASSWORD,
+    PRODUCTS,
+    ADDITIONALS,
+    STORE_CONFIG,
+    MERCADO_PAGO
+  };
+}
